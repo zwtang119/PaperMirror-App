@@ -1,5 +1,6 @@
 # PaperMirror: 论文魔镜 - AI 学术风格迁移
 
+[![Live Demo](https://img.shields.io/badge/🚀_Live_Demo-Click_Here-blue?style=for-the-badge)](https://zwtang119.github.io/PaperMirror/)
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 
 > **像照镜子一样，将顶刊范文的风格“映照”在你的草稿上。**
