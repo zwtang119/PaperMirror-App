@@ -89,74 +89,74 @@ const documentContextSchema: Schema = {
     required: ["documentSummary", "sectionSummaries"],
 };
 
-// --- CORE GENERATION FUNCTION WITH RETRY ---
+// --- CORE GENERATION FUNCTION with enhanced debugging ---
 
 async function generateData<T>(
     prompt: string, 
     systemInstruction: string, 
-    schema: Schema,
-    retries = 2 // Allow 2 retries by default (total 3 attempts)
+    schema: Schema
 ): Promise<T> {
-    let lastError: any;
-    let text = ''; // Scope variable outside try/catch for debugging
-
-    for (let attempt = 0; attempt <= retries; attempt++) {
-        try {
-            const response = await ai.models.generateContent({
-                model: geminiConfig.modelName,
-                contents: prompt,
-                config: {
-                    systemInstruction: systemInstruction,
-                    responseMimeType: "application/json",
-                    responseSchema: schema,
-                    temperature: geminiConfig.temperature, // Keep low for deterministic JSON
-                    thinkingConfig: geminiConfig.thinkingBudget > 0 ? {
-                        thinkingBudget: geminiConfig.thinkingBudget
-                    } : undefined
-                }
-            });
-
-            text = response.text || '';
-            if (!text) {
-                throw new Error("Gemini API returned empty response text.");
+    // 修复 P4: 将 text 变量提升到 try 块外部，确保 catch 能访问
+    let text = '';
+    
+    try {
+        const response = await ai.models.generateContent({
+            model: geminiConfig.modelName,
+            contents: prompt,
+            config: {
+                systemInstruction: systemInstruction,
+                responseMimeType: "application/json",
+                responseSchema: schema,
+                temperature: geminiConfig.temperature,
+                thinkingConfig: geminiConfig.thinkingBudget > 0 ? {
+                    thinkingBudget: geminiConfig.thinkingBudget
+                } : undefined
             }
+        });
 
-            // CLEANUP: Robustly extract JSON object. 
-            // The model might wrap JSON in Markdown ```json ... ``` or even add conversational text before/after.
-            // We search for the first '{' and the last '}' to extract the main JSON object.
-            const firstOpen = text.indexOf('{');
-            const lastClose = text.lastIndexOf('}');
-
-            let cleanedText = text;
-            if (firstOpen !== -1 && lastClose !== -1 && lastClose > firstOpen) {
-                cleanedText = text.substring(firstOpen, lastClose + 1);
-            } else {
-                // Fallback cleaning
-                 cleanedText = text.trim();
-                 if (cleanedText.startsWith('```')) {
-                      cleanedText = cleanedText.replace(/^```(json)?\s*/, '').replace(/\s*```$/, '');
-                 }
-            }
-
-            return JSON.parse(cleanedText) as T;
-        } catch (error) {
-            lastError = error;
-            console.warn(`Gemini Attempt ${attempt + 1} failed:`, error);
-            
-            // Log the actual text that caused the failure
-            if (text) {
-                console.warn(`Failed Raw Text (Attempt ${attempt + 1}):`, text.substring(0, 1000) + "...");
-            }
-            
-            if (attempt === retries) break;
-            
-            // Backoff: wait 1s, then 2s...
-            await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+        text = response.text || '';
+        if (!text) {
+            throw new Error("Gemini API returned empty response text.");
         }
-    }
 
-    console.error("All retry attempts failed.");
-    throw lastError;
+        // ==== 增强的 JSON 清理逻辑 ====
+        console.log("Raw Gemini response length:", text.length);
+        console.log("Raw Gemini response:", text.substring(0, 500) + "..."); // 打印前500字符
+        
+        // 移除 Markdown 代码块标记
+        text = text.trim()
+            .replace(/^```json\s*/i, '')
+            .replace(/^```\s*/i, '')
+            .replace(/\s*```$/i, '');
+        
+        // 提取第一个 '{' 和最后一个 '}' 之间的内容
+        const firstOpen = text.indexOf('{');
+        const lastClose = text.lastIndexOf('}');
+        
+        if (firstOpen !== -1 && lastClose !== -1 && lastClose > firstOpen) {
+            text = text.substring(firstOpen, lastClose + 1);
+        }
+        
+        // 验证 JSON 结构完整性
+        if (!text.startsWith('{') || !text.endsWith('}')) {
+            throw new Error(`Invalid JSON structure: must start with '{' and end with '}'. Cleaned text: ${text.substring(0, 100)}...`);
+        }
+        
+        // 尝试解析
+        return JSON.parse(text) as T;
+        
+    } catch (error) {
+        console.error("Gemini Generation Error:", error);
+        
+        // 现在可以正确访问 text 变量
+        console.error("Failed Text Payload:", text);
+        
+        if (error instanceof SyntaxError) {
+            throw new Error(`JSON Parse Error: ${error.message}. Failed to parse: ${text.substring(0, 200)}...`);
+        }
+        
+        throw error;
+    }
 }
 
 // --- EXPORTS ---
