@@ -1,6 +1,6 @@
 # PaperMirror: AI Academic Style Transfer
 
-[![Live Demo](https://img.shields.io/badge/🚀_Live_Demo-Click_Here-blue?style=for-the-badge)](https://paper-mirror.vercel.app)
+[![Live Demo](https://img.shields.io/badge/🚀_Live_Demo-Click_Here-blue?style=for-the-badge)](https://zwtang119.github.io/PaperMirror/)
 [![Chinese Docs](https://img.shields.io/badge/🇨🇳_中文文档-Click_Here-red?style=for-the-badge)](./README_ZH.md)
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 
