@@ -89,55 +89,74 @@ const documentContextSchema: Schema = {
     required: ["documentSummary", "sectionSummaries"],
 };
 
-// --- CORE GENERATION FUNCTION ---
+// --- CORE GENERATION FUNCTION WITH RETRY ---
 
 async function generateData<T>(
     prompt: string, 
     systemInstruction: string, 
-    schema: Schema
+    schema: Schema,
+    retries = 2 // Allow 2 retries by default (total 3 attempts)
 ): Promise<T> {
-    try {
-        const response = await ai.models.generateContent({
-            model: geminiConfig.modelName,
-            contents: prompt,
-            config: {
-                systemInstruction: systemInstruction,
-                responseMimeType: "application/json",
-                responseSchema: schema,
-                temperature: geminiConfig.temperature,
-                thinkingConfig: geminiConfig.thinkingBudget > 0 ? {
-                    thinkingBudget: geminiConfig.thinkingBudget
-                } : undefined
+    let lastError: any;
+    let text = ''; // Scope variable outside try/catch for debugging
+
+    for (let attempt = 0; attempt <= retries; attempt++) {
+        try {
+            const response = await ai.models.generateContent({
+                model: geminiConfig.modelName,
+                contents: prompt,
+                config: {
+                    systemInstruction: systemInstruction,
+                    responseMimeType: "application/json",
+                    responseSchema: schema,
+                    temperature: geminiConfig.temperature, // Keep low for deterministic JSON
+                    thinkingConfig: geminiConfig.thinkingBudget > 0 ? {
+                        thinkingBudget: geminiConfig.thinkingBudget
+                    } : undefined
+                }
+            });
+
+            text = response.text || '';
+            if (!text) {
+                throw new Error("Gemini API returned empty response text.");
             }
-        });
 
-        let text = response.text;
-        if (!text) {
-            throw new Error("Gemini API returned empty response text.");
+            // CLEANUP: Robustly extract JSON object. 
+            // The model might wrap JSON in Markdown ```json ... ``` or even add conversational text before/after.
+            // We search for the first '{' and the last '}' to extract the main JSON object.
+            const firstOpen = text.indexOf('{');
+            const lastClose = text.lastIndexOf('}');
+
+            let cleanedText = text;
+            if (firstOpen !== -1 && lastClose !== -1 && lastClose > firstOpen) {
+                cleanedText = text.substring(firstOpen, lastClose + 1);
+            } else {
+                // Fallback cleaning
+                 cleanedText = text.trim();
+                 if (cleanedText.startsWith('```')) {
+                      cleanedText = cleanedText.replace(/^```(json)?\s*/, '').replace(/\s*```$/, '');
+                 }
+            }
+
+            return JSON.parse(cleanedText) as T;
+        } catch (error) {
+            lastError = error;
+            console.warn(`Gemini Attempt ${attempt + 1} failed:`, error);
+            
+            // Log the actual text that caused the failure
+            if (text) {
+                console.warn(`Failed Raw Text (Attempt ${attempt + 1}):`, text.substring(0, 1000) + "...");
+            }
+            
+            if (attempt === retries) break;
+            
+            // Backoff: wait 1s, then 2s...
+            await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
         }
-
-        // CLEANUP: Robustly extract JSON object. 
-        // The model might wrap JSON in Markdown ```json ... ``` or even add conversational text before/after.
-        // We search for the first '{' and the last '}' to extract the main JSON object.
-        const firstOpen = text.indexOf('{');
-        const lastClose = text.lastIndexOf('}');
-
-        if (firstOpen !== -1 && lastClose !== -1 && lastClose > firstOpen) {
-            text = text.substring(firstOpen, lastClose + 1);
-        } else {
-            // Fallback cleaning if simplified string search fails
-             text = text.trim();
-             if (text.startsWith('```')) {
-                  text = text.replace(/^```(json)?\s*/, '').replace(/\s*```$/, '');
-             }
-        }
-
-        return JSON.parse(text) as T;
-    } catch (error) {
-        console.error("Gemini Generation Error:", error);
-        console.error("Failed Text Payload:", error instanceof SyntaxError ? "Check logs for raw text" : "N/A");
-        throw error;
     }
+
+    console.error("All retry attempts failed.");
+    throw lastError;
 }
 
 // --- EXPORTS ---
