@@ -52,7 +52,7 @@ const App: React.FC = () => {
   }, [samplePaper, draftPaper, startMigration]);
   
   const mainTitle = 'PaperMirror: AI Academic Style Transfer';
-  const mainDescription = 'Transform your draft into a publication-ready manuscript by mirroring the style of top-tier journals. | 像照镜子一样，将顶刊范文的风格“映照”在你的草稿上。';
+  const mainDescription = 'Transform your draft into a publication-ready manuscript by mirroring the style of top-tier journals. ';
 
   return (
     <div className="min-h-screen font-sans">
@@ -72,18 +72,18 @@ const App: React.FC = () => {
           <aside className="lg:col-span-4 xl:col-span-3 space-y-6">
             <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
               <h2 className="text-lg font-semibold text-slate-800 border-b pb-3 mb-4">
-                1. Upload Files | 上传文件
+                1. Upload Files
               </h2>
               <div className="space-y-4">
                 <FileUpload
                   id="sample-paper"
-                  label={'Sample Paper | 范文'}
+                  label={'Sample Paper'}
                   onFileSelect={handleSampleFileSelect}
                   file={samplePaper}
                 />
                 <FileUpload
                   id="draft-paper"
-                  label="Draft Paper | 草稿"
+                  label="Draft Paper"
                   onFileSelect={handleDraftFileSelect}
                   file={draftPaper}
                 />
@@ -91,7 +91,7 @@ const App: React.FC = () => {
             </div>
             <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
                <h2 className="text-lg font-semibold text-slate-800 border-b pb-3 mb-4">
-                2. Start | 开始
+                2. Start
               </h2>
               <button
                 onClick={handleMigrateClick}
@@ -104,7 +104,7 @@ const App: React.FC = () => {
                     {progress?.stage || 'Initializing...'}
                   </>
                 ) : (
-                  'Migrate Style | 迁移风格'
+                  'Migrate Style'
                 )}
               </button>
                {error && <p className="text-red-600 text-sm mt-4">{error}</p>}
