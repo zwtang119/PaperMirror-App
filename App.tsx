@@ -117,7 +117,7 @@ const App: React.FC = () => {
         </div>
       </main>
       <footer className="text-center py-6 text-sm text-slate-500">
-        <p>Powered by Gemini 2.5 Pro • Privacy First • Client-Side Processing</p>
+        <p>Powered by Gemini 3.0 Pro Preview • Privacy First • Client-Side Processing</p>
       </footer>
     </div>
   );
