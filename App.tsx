@@ -51,8 +51,7 @@ const App: React.FC = () => {
     startMigration({ samplePaper, draftPaper });
   }, [samplePaper, draftPaper, startMigration]);
   
-  // Optimized H1 for SEO matching
-  const mainTitle = 'PaperMirror: AI Academic Style Transfer & Thesis Polisher';
+  const mainTitle = 'PaperMirror: AI Academic Style Transfer';
   const mainDescription = 'Transform your draft into a publication-ready manuscript by mirroring the style of top-tier journals. | 像照镜子一样，将顶刊范文的风格“映照”在你的草稿上。';
 
   return (

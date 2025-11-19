@@ -3,8 +3,7 @@ import type { AnalysisReport, StyleGuide, DocumentContext } from '../types';
 import { inferencePrompts, documentContextPrompt } from './prompts';
 import { geminiConfig } from './config';
 
-// Initialize the SDK directly with the environment variable
-// Note: API_KEY is injected by Vite at build time based on .env
+// Initialize the SDK directly with the environment variable as per strict guidelines
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 // --- SCHEMAS defined using the SDK's Type enum ---
