@@ -4,7 +4,7 @@ import {
   generateFinalReport,
   generateDocumentContext
 } from './geminiService';
-import type { MigrationResult, ProgressUpdate, StyleGuide } from './types';
+import type { MigrationResult, ProgressUpdate, StyleGuide } from '../types';
 
 interface WorkflowParams {
   samplePaperContent: string;
