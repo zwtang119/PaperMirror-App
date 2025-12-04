@@ -19,7 +19,7 @@ interface Chunk {
 
 // 修复 P3: 将 PARAGRAPHS_PER_CHUNK 从 10 降低到 8，适应小文章
 const PARAGRAPHS_PER_CHUNK = 8;
-const MIN_CHUNK_SIZE = 500; // 最小 Chunk 字符数，用于合并小块
+const MIN_CHUNK_SIZE = 1500; // 最小 Chunk 字符数提升到1500，用于合并小块，用于小700字的小篇幅。
 
 function chunkDocument(content: string): Chunk[] {
   const trimmedContent = content.replace(/\r\n/g, '\n').trim();
