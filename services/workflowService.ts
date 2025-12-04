@@ -188,17 +188,16 @@ const runInferenceWorkflow = async ({
     console.warn(`Processing completed with ${failedChunks.length} failed chunk(s):`, failedChunks);
   }
 
-  return { 
-    conservative: rewrittenConservative.trim(), 
-    standard: rewrittenStandard.trim(), 
-    enhanced: rewrittenEnhanced.trim(), 
- //     analysisReport 
- //  新增Comingsoon     
-    analysisReport: { 
+return { 
+  conservative: rewrittenConservative.trim(), 
+  standard: rewrittenStandard.trim(), 
+  enhanced: rewrittenEnhanced.trim(), 
+  analysisReport: { 
     status: 'coming_soon',
     message: '分析报告功能正在开发中，敬请期待'
   }
 };
+
 
 export const runMigrationWorkflow = async (params: WorkflowParams): Promise<MigrationResult> => {
   return runInferenceWorkflow(params);
