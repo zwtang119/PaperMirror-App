@@ -57,14 +57,14 @@ function safeParseJSON(text: string) {
 
 async function run<T>(prompt: string): Promise<T> {
   const model = client.getGenerativeModel({
-    model: geminiConfig.modelName ?? "gemini-2.0-flash"
+    model: geminiConfig.modelName ?? "gemini-2.5-flash"
   });
 
   const result = await model.generateContent({
     contents: [{ role: "user", parts: [{ text: prompt }] }],
     generationConfig: {
       temperature: geminiConfig.temperature ?? 0.2,
-      maxOutputTokens: 4096   // consumer API limit
+      maxOutputTokens: 65536   // consumer API limit
     }
   });
 
