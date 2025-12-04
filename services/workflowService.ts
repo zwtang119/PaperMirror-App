@@ -35,7 +35,12 @@ function chunkDocument(content: string): Chunk[] {
   ].join('|');
   
   // Regex to capture section titles along with the split
-  const sectionRegex = new RegExp(`(^#+\\s.*|^(?:\\d+\\.?\\s*)?\\b(?:${academicSections})\\b.*$)`, 'im');
+  // const sectionRegex = new RegExp(`(^#+\\s.*|^(?:\\d+\\.?\\s*)?\\b(?:${academicSections})\\b.*$)`, 'im');
+  const sectionRegex = new RegExp(
+    `(^#+\\s.*|^(?:\\d+\\.?\\s*)?\\b(?:${academicSections})\\b.*$|^[一二三四五六七八九十]+、.*$)`, 
+    'im'
+  );
+  
   const rawChunks = trimmedContent.split(sectionRegex);
   
   const chunks: Chunk[] = [];
@@ -188,6 +193,10 @@ const runInferenceWorkflow = async ({
     standard: rewrittenStandard.trim(), 
     enhanced: rewrittenEnhanced.trim(), 
  //     analysisReport 
+ //  新增Comingsoon     
+    analysisReport: { 
+    status: 'coming_soon',
+    message: '分析报告功能正在开发中，敬请期待'
   };
 };
 
