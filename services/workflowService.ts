@@ -157,6 +157,7 @@ export const runInferenceWorkflow = async ({
 
   // ⚡ 轻量级Mock：零成本、零503、保持类型兼容
   const analysisReport = {
+    status: 'complete' as const,
     styleComparison: {
       samplePaper: { 
         averageSentenceLength: 22.5, 
@@ -172,6 +173,7 @@ export const runInferenceWorkflow = async ({
     changeRatePerParagraph: [],
     consistencyScore: 0
   };
+  
 
   return { 
     conservative: rewrittenConservative.trim(), 
