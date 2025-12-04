@@ -1,219 +1,161 @@
-import { GoogleGenAI, Type, Schema } from "@google/genai";
-import type { AnalysisReport, StyleGuide, DocumentContext } from '../types';
-import { inferencePrompts, documentContextPrompt } from './prompts';
-import { geminiConfig } from './config';
+// geminiService.ts – compatible with frontend Consumer API + your config + your prompts
 
-// --- Initialize Gemini SDK ---
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { geminiConfig } from "./config";
+import { inferencePrompts, documentContextPrompt } from "./prompts";
+
+import type { 
+  StyleGuide, 
+  DocumentContext, 
+  AnalysisReport 
+} from "../types";
+
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
 if (!apiKey) {
-    console.error("❌ Fatal Error: Missing VITE_GEMINI_API_KEY");
+  throw new Error("VITE_GEMINI_API_KEY is missing.");
 }
 
-const ai = new GoogleGenAI({ apiKey });
+const client = new GoogleGenerativeAI(apiKey);
 
-// ============================================================================
-//  SCHEMAS
-// ============================================================================
+/* -------------------------------------------------------
+ * JSON FIXER
+ * ----------------------------------------------------- */
+function cleanJSON(text: string): string {
+  let t = text.trim();
 
-const styleGuideSchema: Schema = {
-    type: Type.OBJECT,
-    properties: {
-        averageSentenceLength: { type: Type.NUMBER },
-        lexicalComplexity: { type: Type.NUMBER },
-        passiveVoicePercentage: { type: Type.NUMBER },
-        commonTransitions: { type: Type.ARRAY, items: { type: Type.STRING } },
-        tone: { type: Type.STRING },
-        structure: { type: Type.STRING },
-    },
-    required: [
-        "averageSentenceLength",
-        "lexicalComplexity",
-        "passiveVoicePercentage",
-        "commonTransitions",
-        "tone",
-        "structure"
-    ],
-};
+  t = t
+    .replace(/```json/gi, "")
+    .replace(/```/g, "")
+    .replace(/,\s*}/g, "}")
+    .replace(/,\s*]/g, "]");
 
-const rewriteChunkSchema: Schema = {
-    type: Type.OBJECT,
-    properties: {
-        conservative: { type: Type.STRING },
-        standard: { type: Type.STRING },
-        enhanced: { type: Type.STRING },
-    },
-    required: ["conservative", "standard", "enhanced"],
-};
+  // Extract JSON region only
+  const first = t.indexOf("{");
+  const last = t.lastIndexOf("}");
+  if (first !== -1 && last !== -1 && last > first) {
+    t = t.substring(first, last + 1);
+  }
 
-const finalReportSchema: Schema = {
-    type: Type.OBJECT,
-    properties: {
-        styleComparison: {
-            type: Type.OBJECT,
-            properties: {
-                samplePaper: {
-                    type: Type.OBJECT,
-                    properties: {
-                        averageSentenceLength: { type: Type.NUMBER },
-                        lexicalComplexity: { type: Type.NUMBER },
-                        passiveVoicePercentage: { type: Type.NUMBER },
-                    },
-                    required: ["averageSentenceLength", "lexicalComplexity", "passiveVoicePercentage"],
-                },
-                draftPaper: {
-                    type: Type.OBJECT,
-                    properties: {
-                        averageSentenceLength: { type: Type.NUMBER },
-                        lexicalComplexity: { type: Type.NUMBER },
-                        passiveVoicePercentage: { type: Type.NUMBER },
-                    },
-                    required: ["averageSentenceLength", "lexicalComplexity", "passiveVoicePercentage"],
-                }
-            },
-            required: ["samplePaper", "draftPaper"],
-        },
-        changeRatePerParagraph: {
-            type: Type.ARRAY,
-            items: { type: Type.NUMBER },
-        },
-        consistencyScore: { type: Type.NUMBER },
-    },
-    required: ["styleComparison", "changeRatePerParagraph", "consistencyScore"],
-};
+  return t;
+}
 
-const documentContextSchema: Schema = {
-    type: Type.OBJECT,
-    properties: {
-        documentSummary: { type: Type.STRING },
-        sectionSummaries: {
-            type: Type.ARRAY,
-            items: {
-                type: Type.OBJECT,
-                properties: {
-                    sectionTitle: { type: Type.STRING },
-                    summary: { type: Type.STRING },
-                },
-                required: ["sectionTitle", "summary"],
-            },
-        },
-    },
-    required: ["documentSummary", "sectionSummaries"],
-};
+function safeParseJSON(text: string) {
+  const cleaned = cleanJSON(text);
+  try {
+    return JSON.parse(cleaned);
+  } catch (e) {
+    console.warn("Failed parsing JSON.\nRaw:", text);
+    console.warn("Cleaned:", cleaned);
+    throw new Error("Model did not return valid JSON.");
+  }
+}
 
-// ============================================================================
-//  CORE GENERATION (适配新版 SDK)
-// ============================================================================
+/* -------------------------------------------------------
+ * Core request function for all tasks
+ * ----------------------------------------------------- */
 
-async function generateData<T>(
-    prompt: string,
-    systemInstruction: string,
-    schema: Schema
-): Promise<T> {
+async function run<T>(prompt: string): Promise<T> {
+  const model = client.getGenerativeModel({
+    model: geminiConfig.modelName ?? "gemini-2.0-flash"
+  });
 
-    let raw = "";
-
-    try {
-        // 🎯 官方推荐的新版调用方式
-        const model = ai.getGenerativeModel({
-            model: geminiConfig.modelName,
-            systemInstruction,
-            generationConfig: {
-                temperature: geminiConfig.temperature,
-                maxOutputTokens: geminiConfig.maxOutputTokens,
-                responseMimeType: "application/json",
-                responseSchema: schema,
-                ...(geminiConfig.thinkingBudget > 0
-                    ? { thinking: { budget: geminiConfig.thinkingBudget } }
-                    : {}),
-            }
-        });
-
-        const result = await model.generateContent(prompt);
-
-        // 新版 SDK 返回格式
-        raw = result.response.text() || "";
-
-        console.log("Raw Gemini Output (first 500 chars):", raw.slice(0, 500));
-
-        // =========================================================
-        //  CLEAN JSON
-        // =========================================================
-        let cleaned = raw
-            .replace(/```json/i, "")
-            .replace(/```/g, "")
-            .trim();
-
-        const first = cleaned.indexOf("{");
-        const last = cleaned.lastIndexOf("}");
-
-        if (first !== -1 && last !== -1 && last > first) {
-            cleaned = cleaned.slice(first, last + 1);
-        }
-
-        if (!cleaned.startsWith("{") || !cleaned.endsWith("}")) {
-            throw new Error(
-                "Invalid JSON: does not start/end with { }. Extracted: " +
-                cleaned.slice(0, 200)
-            );
-        }
-
-        return JSON.parse(cleaned) as T;
-
-    } catch (err) {
-        console.error("❌ Gemini Generation Error:", err);
-        console.error("❌ Raw Response:", raw.slice(0, 300));
-        throw err instanceof Error ? err : new Error(String(err));
+  const result = await model.generateContent({
+    contents: [{ role: "user", parts: [{ text: prompt }] }],
+    generationConfig: {
+      temperature: geminiConfig.temperature ?? 0.2,
+      maxOutputTokens: 4096   // consumer API limit
     }
+  });
+
+  const raw = result.response.text();
+  const json = safeParseJSON(raw);
+  return json as T;
 }
 
-// ============================================================================
-//  EXPORT API
-// ============================================================================
+/* -------------------------------------------------------
+ * EXPORTS
+ * ----------------------------------------------------- */
 
-export const generateDocumentContext = async (fullDocumentContent: string): Promise<DocumentContext> => {
-    const { systemInstruction, getPrompt } = documentContextPrompt;
-    return generateData<DocumentContext>(
-        getPrompt(fullDocumentContent),
-        systemInstruction,
-        documentContextSchema
-    );
+export const generateDocumentContext = async (
+  fullDocumentContent: string
+): Promise<DocumentContext> => {
+  const { systemInstruction, getPrompt } = documentContextPrompt;
+
+  const prompt = `
+${systemInstruction}
+
+STRICT REQUIREMENTS:
+- Output must be a single valid JSON object.
+- No markdown. No comments.
+
+${getPrompt(fullDocumentContent)}
+  `.trim();
+
+  return run<DocumentContext>(prompt);
 };
 
-export const extractStyleGuide = async (samplePaperContent: string): Promise<StyleGuide> => {
-    const { systemInstruction, getPrompt } = inferencePrompts.extractStyleGuide;
-    return generateData<StyleGuide>(
-        getPrompt(samplePaperContent),
-        systemInstruction,
-        styleGuideSchema
-    );
+export const extractStyleGuide = async (
+  samplePaperContent: string
+): Promise<StyleGuide> => {
+  const { systemInstruction, getPrompt } = inferencePrompts.extractStyleGuide;
+
+  const prompt = `
+${systemInstruction}
+
+STRICT REQUIREMENTS:
+- Output must be valid JSON.
+- No extra text.
+
+${getPrompt(samplePaperContent)}
+  `.trim();
+
+  return run<StyleGuide>(prompt);
 };
 
 export const rewriteChunkInInferenceMode = async (params: {
-    mainContent: string;
-    contextBefore: string;
-    contextAfter: string;
-    styleGuide: StyleGuide;
-    documentContext: DocumentContext;
-    currentSectionTitle?: string;
-}) => {
-    const { systemInstruction, getPrompt } = inferencePrompts.rewriteChunk;
-    return generateData(
-        getPrompt(params),
-        systemInstruction,
-        rewriteChunkSchema
-    );
+  mainContent: string;
+  contextBefore: string;
+  contextAfter: string;
+  styleGuide: StyleGuide;
+  documentContext: DocumentContext;
+  currentSectionTitle?: string;
+}): Promise<{
+  conservative: string;
+  standard: string;
+  enhanced: string;
+}> => {
+  const { systemInstruction, getPrompt } = inferencePrompts.rewriteChunk;
+
+  const prompt = `
+${systemInstruction}
+
+STRICT REQUIREMENTS:
+- Output must be single JSON object with keys:
+  conservative, standard, enhanced
+- No markdown.
+
+${getPrompt(params)}
+  `.trim();
+
+  return run(prompt);
 };
 
 export const generateFinalReport = async (params: {
-    sampleStyleGuide: StyleGuide;
-    originalDraftContent: string;
-    rewrittenStandardContent: string;
+  sampleStyleGuide: StyleGuide;
+  originalDraftContent: string;
+  rewrittenStandardContent: string;
 }): Promise<AnalysisReport> => {
-    const { systemInstruction, getPrompt } = inferencePrompts.generateFinalReport;
-    return generateData(
-        getPrompt(params),
-        systemInstruction,
-        finalReportSchema
-    );
+  const { systemInstruction, getPrompt } = inferencePrompts.generateFinalReport;
+
+  const prompt = `
+${systemInstruction}
+
+STRICT REQUIREMENTS:
+- Output must be valid JSON ONLY.
+
+${getPrompt(params)}
+  `.trim();
+
+  return run<AnalysisReport>(prompt);
 };
