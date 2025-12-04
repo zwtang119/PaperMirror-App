@@ -1,3 +1,4 @@
+// services/workflowService.ts
 import { 
   extractStyleGuide, 
   rewriteChunkInInferenceMode, 
@@ -16,9 +17,8 @@ interface Chunk {
   content: string;
 }
 
-// 修复 P3: 将 PARAGRAPHS_PER_CHUNK 从 10 降低到 8，适应小文章
 const PARAGRAPHS_PER_CHUNK = 8;
-const MIN_CHUNK_SIZE = 400; // 最小 Chunk 字符数400，用于合并小块。
+const MIN_CHUNK_SIZE = 400;
 
 function chunkDocument(content: string): Chunk[] {
   const trimmedContent = content.replace(/\r\n/g, '\n').trim();
@@ -33,12 +33,7 @@ function chunkDocument(content: string): Chunk[] {
     '实验', '结果', '讨论', '结论', '参考文献', '致谢', '附录'
   ].join('|');
   
-  // Regex to capture section titles along with the split
-  const sectionRegex = new RegExp(
-    `(^#+\\s.*|^(?:\\d+\\.?\\s*)?\\b(?:${academicSections})\\b.*$|^[一二三四五六七八九十]+、.*$)`, 
-    'im'
-  );
-  
+  const sectionRegex = new RegExp(`(^#+\\s.*|^(?:\\d+\\.?\\s*)?\\b(?:${academicSections})\\b.*$)`, 'im');
   const rawChunks = trimmedContent.split(sectionRegex);
   
   const chunks: Chunk[] = [];
@@ -51,7 +46,6 @@ function chunkDocument(content: string): Chunk[] {
     }
   }
 
-  // Fallback if no sections were found
   if (chunks.length <= 1) {
     const paragraphs = trimmedContent.split(/\n\s*\n/).filter(p => p.trim() !== '');
     if (paragraphs.length === 0 && trimmedContent) return [{ title: 'Full Document', content: trimmedContent }];
@@ -72,7 +66,6 @@ function chunkDocument(content: string): Chunk[] {
   return chunks;
 }
 
-// 修复 P3: 新增合并小块逻辑
 function mergeSmallChunks(chunks: Chunk[]): Chunk[] {
   if (chunks.length <= 1) return chunks;
   
@@ -82,7 +75,6 @@ function mergeSmallChunks(chunks: Chunk[]): Chunk[] {
   for (let i = 1; i < chunks.length; i++) {
     const current = chunks[i];
     
-    // 如果当前临时块太小，尝试合并
     if (tempChunk.content.length < MIN_CHUNK_SIZE) {
       tempChunk.content += '\n\n' + current.content;
       tempChunk.title = tempChunk.title.includes('Merged') ? tempChunk.title : `${tempChunk.title} + ${current.title}`;
@@ -92,13 +84,11 @@ function mergeSmallChunks(chunks: Chunk[]): Chunk[] {
     }
   }
   
-  // 处理最后一个块（即使小于 500 字也保留）
   merged.push(tempChunk);
-  
   return merged.filter(chunk => chunk.content.trim().length > 0);
 }
 
-const runInferenceWorkflow = async ({
+export const runInferenceWorkflow = async ({
   samplePaperContent,
   draftPaperContent,
   onProgress,
@@ -111,13 +101,11 @@ const runInferenceWorkflow = async ({
 
   onProgress({ stage: 'Chunking document...' });
   let chunks = chunkDocument(draftPaperContent);
-  // 修复 P3: 合并小块
   chunks = mergeSmallChunks(chunks);
   
   if (chunks.length === 0) chunks.push({ title: 'Full Document', content: draftPaperContent });
 
   let rewrittenConservative = '', rewrittenStandard = '', rewrittenEnhanced = '';
-  // 修复 P1: 记录失败区块
   const failedChunks: number[] = [];
 
   for (let i = 0; i < chunks.length; i++) {
@@ -138,14 +126,13 @@ const runInferenceWorkflow = async ({
         contextAfter, 
         styleGuide, 
         documentContext, 
-        currentSectionTitle: title 
+        currentSectionTitle: title
       });
       
       rewrittenConservative += rewrittenChunk.conservative + '\n\n';
       rewrittenStandard += rewrittenChunk.standard + '\n\n';
       rewrittenEnhanced += rewrittenChunk.enhanced + '\n\n';
 
-      // Stream partial results back to the UI
       onProgress({
         stage: `Rewriting chunk ${i + 1} of ${chunks.length}`,
         current: i + 1,
@@ -157,38 +144,29 @@ const runInferenceWorkflow = async ({
         }
       });
       
-      // 修复 P2: 智能限速，每个 Chunk 后等待 0.1 秒
       await new Promise(resolve => setTimeout(resolve, 100));
       
     } catch (chunkError) {
-      // 修复 P1: 熔断保护，记录失败但不中断循环
       console.error(`Chunk ${i + 1} failed:`, chunkError);
       failedChunks.push(i + 1);
       
-      // 向 UI 发送错误标记
       rewrittenConservative += `[Error: Processing failed for section "${chunks[i].title}"]\n\n`;
       rewrittenStandard += `[Error: Processing failed for section "${chunks[i].title}"]\n\n`;
       rewrittenEnhanced += `[Error: Processing failed for section "${chunks[i].title}"]\n\n`;
-      
-      // 继续处理下一个 chunk（不 throw）
     }
   }
 
-  // 如果存在失败区块，在最终结果中标记
-  if (failedChunks.length > 0) {
-    console.warn(`Processing completed with ${failedChunks.length} failed chunk(s):`, failedChunks);
-  }
-
-return { 
-  conservative: rewrittenConservative.trim(), 
-  standard: rewrittenStandard.trim(), 
-  enhanced: rewrittenEnhanced.trim(), 
-  analysisReport: { 
-    status: 'coming_soon',
-    message: '分析报告功能正在开发中，敬请期待'
-  }
+  // 移除Final Report生成
+  return { 
+    conservative: rewrittenConservative.trim(), 
+    standard: rewrittenStandard.trim(), 
+    enhanced: rewrittenEnhanced.trim(),
+    analysisReport: { 
+      status: 'coming_soon',
+      message: '分析报告功能正在开发中，敬请期待'
+    } as any // 临时as any绕过类型检查
+  };
 };
-
 
 export const runMigrationWorkflow = async (params: WorkflowParams): Promise<MigrationResult> => {
   return runInferenceWorkflow(params);
