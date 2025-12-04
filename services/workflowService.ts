@@ -154,8 +154,8 @@ const runInferenceWorkflow = async ({
         }
       });
       
-      // 修复 P2: 智能限速，每个 Chunk 后等待 2 秒
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // 修复 P2: 智能限速，每个 Chunk 后等待 0.1 秒
+      await new Promise(resolve => setTimeout(resolve, 100));
       
     } catch (chunkError) {
       // 修复 P1: 熔断保护，记录失败但不中断循环
