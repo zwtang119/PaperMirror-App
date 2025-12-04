@@ -15,7 +15,7 @@ export const geminiConfig = {
    * The thinking budget allocated to the model.
    * Setting a balanced budget for quality style transfer logic.
    */
-  thinkingBudget: -1,
+  thinkingBudget: 0,
    
   /**
    * Output Limit:
