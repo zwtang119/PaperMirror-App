@@ -15,13 +15,5 @@ export const geminiConfig = {
    * The thinking budget allocated to the model.
    * Setting a balanced budget for quality style transfer logic.
    */
-  thinkingBudget: 0,
-   
-  /**
-   * Output Limit:
-   * ⚠️ CRITICAL FIX: Explicitly set to the maximum (65536).
-   * Without this, the default 8192 limit will cause JSON truncation 
-   * after the model spends tokens on thinking.
-   */
-  maxOutputTokens: 65536,
+  thinkingBudget: -1,
 };
