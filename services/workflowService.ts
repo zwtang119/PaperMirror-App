@@ -197,7 +197,7 @@ const runInferenceWorkflow = async ({
     analysisReport: { 
     status: 'coming_soon',
     message: '分析报告功能正在开发中，敬请期待'
-  };
+  }
 };
 
 export const runMigrationWorkflow = async (params: WorkflowParams): Promise<MigrationResult> => {
