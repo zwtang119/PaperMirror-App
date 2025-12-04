@@ -11,12 +11,14 @@ export interface StyleGuide extends StyleMetrics {
 }
 
 export interface AnalysisReport {
-  styleComparison: {
+  status: 'coming_soon' | 'complete';  // ← 新增：状态标记（必填）
+  message?: string;                     // ← 新增：提示信息（可选）
+  styleComparison?: {          // ← 加?
     samplePaper: StyleMetrics;
     draftPaper: StyleMetrics;
   };
-  changeRatePerParagraph: number[];
-  consistencyScore: number;
+  changeRatePerParagraph?: number[]; // ← 加?
+  consistencyScore?: number;   // ← 加?
 }
 
 export type AppStatus = 'idle' | 'loading' | 'success' | 'error';
