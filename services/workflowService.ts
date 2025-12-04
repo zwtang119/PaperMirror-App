@@ -1,7 +1,7 @@
 import { 
   extractStyleGuide, 
   rewriteChunkInInferenceMode, 
-  generateFinalReport,
+ //   generateFinalReport,
   generateDocumentContext
 } from './geminiService';
 import type { MigrationResult, ProgressUpdate, StyleGuide } from '../types';
@@ -171,12 +171,12 @@ const runInferenceWorkflow = async ({
     }
   }
 
-  onProgress({ stage: 'Generating final report...' });
-  const analysisReport = await generateFinalReport({ 
-    sampleStyleGuide: styleGuide, 
-    originalDraftContent: draftPaperContent, 
-    rewrittenStandardContent: rewrittenStandard 
-  });
+ //   onProgress({ stage: 'Generating final report...' });
+ //   const analysisReport = await generateFinalReport({ 
+ //     sampleStyleGuide: styleGuide, 
+ //     originalDraftContent: draftPaperContent, 
+ //     rewrittenStandardContent: rewrittenStandard 
+ //   });
 
   // 如果存在失败区块，在最终结果中标记
   if (failedChunks.length > 0) {
@@ -187,7 +187,7 @@ const runInferenceWorkflow = async ({
     conservative: rewrittenConservative.trim(), 
     standard: rewrittenStandard.trim(), 
     enhanced: rewrittenEnhanced.trim(), 
-    analysisReport 
+ //     analysisReport 
   };
 };
 
