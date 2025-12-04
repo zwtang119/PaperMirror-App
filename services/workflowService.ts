@@ -1,7 +1,6 @@
 import { 
   extractStyleGuide, 
   rewriteChunkInInferenceMode, 
- //   generateFinalReport,
   generateDocumentContext
 } from './geminiService';
 import type { MigrationResult, ProgressUpdate, StyleGuide } from '../types';
@@ -35,7 +34,6 @@ function chunkDocument(content: string): Chunk[] {
   ].join('|');
   
   // Regex to capture section titles along with the split
-  // const sectionRegex = new RegExp(`(^#+\\s.*|^(?:\\d+\\.?\\s*)?\\b(?:${academicSections})\\b.*$)`, 'im');
   const sectionRegex = new RegExp(
     `(^#+\\s.*|^(?:\\d+\\.?\\s*)?\\b(?:${academicSections})\\b.*$|^[一二三四五六七八九十]+、.*$)`, 
     'im'
@@ -175,13 +173,6 @@ const runInferenceWorkflow = async ({
       // 继续处理下一个 chunk（不 throw）
     }
   }
-
- //   onProgress({ stage: 'Generating final report...' });
- //   const analysisReport = await generateFinalReport({ 
- //     sampleStyleGuide: styleGuide, 
- //     originalDraftContent: draftPaperContent, 
- //     rewrittenStandardContent: rewrittenStandard 
- //   });
 
   // 如果存在失败区块，在最终结果中标记
   if (failedChunks.length > 0) {
