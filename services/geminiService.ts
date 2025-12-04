@@ -4,7 +4,13 @@ import { inferencePrompts, documentContextPrompt } from './prompts';
 import { geminiConfig } from './config';
 
 // Initialize the SDK directly with the environment variable as per strict guidelines
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+
+if (!apiKey) {
+    console.error("❌ Fatal Error: API Key is missing. Please check your .env file or GitHub Secrets.");
+}
+
+const ai = new GoogleGenAI({ apiKey: apiKey });
 
 // --- SCHEMAS defined using the SDK's Type enum ---
 
