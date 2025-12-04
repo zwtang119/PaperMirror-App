@@ -114,6 +114,7 @@ async function generateData<T>(
                 responseMimeType: "application/json",
                 responseSchema: schema,
                 temperature: geminiConfig.temperature,
+                maxOutputTokens: geminiConfig.maxOutputTokens, 
                 thinkingConfig: geminiConfig.thinkingBudget > 0 ? {
                     thinkingBudget: geminiConfig.thinkingBudget
                 } : undefined
