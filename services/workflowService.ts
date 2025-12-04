@@ -17,8 +17,8 @@ interface Chunk {
   content: string;
 }
 
-// 修复 P3: 将 PARAGRAPHS_PER_CHUNK 从 10 提升到 25，减少碎片化
-const PARAGRAPHS_PER_CHUNK = 25;
+// 修复 P3: 将 PARAGRAPHS_PER_CHUNK 从 10 降低到 8，适应小文章
+const PARAGRAPHS_PER_CHUNK = 8;
 const MIN_CHUNK_SIZE = 500; // 最小 Chunk 字符数，用于合并小块
 
 function chunkDocument(content: string): Chunk[] {
