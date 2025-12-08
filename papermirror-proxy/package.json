@@ -1,0 +1,33 @@
+{
+  "name": "papermirror-proxy",
+  "version": "1.0.0",
+  "description": "PaperMirror 代理服务 - 隐藏 Gemini API 密钥",
+  "main": "proxy.js",
+  "scripts": {
+    "start": "node proxy.js",
+    "dev": "node proxy.js",
+    "deploy": "gcloud run deploy papermirror-proxy --source . --allow-unauthenticated --memory=512Mi --cpu=1 --max-instances=10 --min-instances=0 --region=us-central1",
+    "logs": "gcloud run services logs read papermirror-proxy --region=us-central1",
+    "status": "gcloud run services describe papermirror-proxy --region=us-central1"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "compression": "^1.7.4",
+    "@google/generative-ai": "^0.21.0",
+    "express-rate-limit": "^7.1.5",
+    "dotenv": "^16.3.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "papermirror",
+    "gemini",
+    "proxy",
+    "ai",
+    "google-cloud"
+  ],
+  "author": "PaperMirror",
+  "license": "MIT"
+}
