@@ -28,9 +28,15 @@ const StyleMetricsDisplay: React.FC<{ title: string; metrics: StyleMetrics }> = 
 );
 
 const AnalysisReport: React.FC<AnalysisReportProps> = ({ report }) => {
-  const avgChangeRate = report.changeRatePerParagraph.length > 0
-    ? (report.changeRatePerParagraph.reduce((a, b) => a + b, 0) / report.changeRatePerParagraph.length) * 100
+  const changeRates = report.changeRatePerParagraph ?? [];
+  const avgChangeRate = changeRates.length > 0
+    ? (changeRates.reduce((a, b) => a + b, 0) / changeRates.length) * 100
     : 0;
+
+  const sc = report.styleComparison ?? {
+    samplePaper: { averageSentenceLength: 0, lexicalComplexity: 0, passiveVoicePercentage: 0 },
+    draftPaper: { averageSentenceLength: 0, lexicalComplexity: 0, passiveVoicePercentage: 0 }
+  };
 
   return (
     <div className="space-y-6">
@@ -39,8 +45,8 @@ const AnalysisReport: React.FC<AnalysisReportProps> = ({ report }) => {
       </div>
 
       <div className="space-y-4">
-        <StyleMetricsDisplay title="Sample Paper Metrics" metrics={report.styleComparison.samplePaper} />
-        <StyleMetricsDisplay title="Original Draft Metrics" metrics={report.styleComparison.draftPaper} />
+        <StyleMetricsDisplay title="Sample Paper Metrics" metrics={sc.samplePaper} />
+        <StyleMetricsDisplay title="Original Draft Metrics" metrics={sc.draftPaper} />
       </div>
 
       <div>
