@@ -127,5 +127,7 @@ dist
 *.swp
 *.swo
 /papermirror-proxy
+/papermirror-proxy
+/papermirror-proxy
 papermirror-proxy/proxy.js
 papermirror-proxy/package.json
