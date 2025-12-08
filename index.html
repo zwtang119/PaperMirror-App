@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="./vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- SEO & GEO Optimization -->
+    <title>PaperMirror: AI Academic Style Transfer & Thesis Polisher (Free/Client-Side)</title>
+    <meta name="title" content="PaperMirror: AI Academic Style Transfer & Thesis Polisher" />
+    <meta name="description" content="Free AI tool for researchers. Transform drafts into Nature/Science style using Gemini 2.5 Pro. Privacy-focused, client-side, quantitative style transfer." />
+    <meta name="keywords" content="academic writing, style transfer, gemini ai, thesis editing, paper polisher, latex alternative, esl research tool, privacy focused ai" />
+    
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://zwtang119.github.io/PaperMirror/" />
+    <meta property="og:title" content="PaperMirror: Turn Drafts into Top-Tier Journal Quality" />
+    <meta property="og:description" content="Don't just fix grammar. Mirror the voice of top-tier journals. Quantitative analysis meets Generative AI. Free & Secure." />
+    <meta property="og:image" content="https://zwtang119.github.io/PaperMirror/og-image.png" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://zwtang119.github.io/PaperMirror/" />
+    <meta property="twitter:title" content="PaperMirror: AI Academic Style Transfer" />
+    <meta property="twitter:description" content="Quantitative style analysis + Gemini 2.5 Pro for ESL researchers. Secure & Open Source." />
+    <meta property="twitter:image" content="https://zwtang119.github.io/PaperMirror/og-image.png" />
+
+    <!-- Canonical -->
+    <link rel="canonical" href="https://zwtang119.github.io/PaperMirror/" />
+
+    <!-- GEO: Structured Data for AI Search Engines -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "SoftwareApplication",
+          "name": "PaperMirror",
+          "operatingSystem": "Browser",
+          "applicationCategory": "AcademicApplication",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+          },
+          "description": "A client-side AI tool that performs quantitative style transfer on academic papers using Google Gemini models.",
+          "featureList": [
+            "Quantitative Style Analysis",
+            "Privacy-First Client-Side Processing",
+            "Long-Document Support",
+            "Gemini 2.5/3.0 Pro Integration"
+          ],
+          "audience": {
+            "@type": "Audience",
+            "audienceType": "Researchers, PhD Students"
+          }
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "Is PaperMirror free?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes, PaperMirror is open-source and free to use. You only need your own Google Gemini API Key (which has a generous free tier)."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Is my research data safe?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes. PaperMirror uses a client-side architecture. Your text is sent directly from your browser to Google's API. No intermediate server stores or views your data."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
+
+    <!-- Tailwind CSS via CDN for simplicity in this setup -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="./index.css">
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
+    "marked": "https://aistudiocdn.com/marked@^17.0.0",
+    "dompurify": "https://aistudiocdn.com/dompurify@^3.3.0",
+    "vite": "https://aistudiocdn.com/vite@^7.2.2",
+    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.1"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-slate-50 text-slate-800">
+    <div id="root"></div>
+    <script type="module" src="./index.tsx"></script>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
