@@ -7,7 +7,7 @@ const BASE_URL = import.meta.env.VITE_PROXY_BASE_URL || '';
 async function postJSON<T>(path: string, payload: any): Promise<T> {
   const url = `${BASE_URL}${path}`;
   const controller = new AbortController();
-  const timeout = setTimeout(() =&gt; controller.abort(), 60000); // 延长到60秒
+  const timeout = setTimeout(() => controller.abort(), 60000); // 延长到60秒
 
   try {
     const res = await fetch(url, {
