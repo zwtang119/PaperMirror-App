@@ -63,10 +63,10 @@ function chunkDocument(content: string): Chunk[] {
         if (boundary <= start) boundary = trimmedContent.lastIndexOf('\n', end);
         if (boundary <= start) boundary = end;
         const segment = trimmedContent.slice(start, boundary).trim();
-        if (segment) parts.push({ title: `Part ${parts.length + 1}`, content: segment });
+        if (segment) parts.push({ title: `Part ${parts.length + 1}`, rawTitle: `Part ${parts.length + 1}`, content: segment });
         start = boundary < trimmedContent.length ? boundary + 1 : boundary;
       }
-      return parts.length ? parts : [{ title: 'Full Document', content: trimmedContent }];
+      return parts.length ? parts : [{ title: 'Full Document', rawTitle: 'Full Document', content: trimmedContent }];
     }
 
     // 第三重：段落分组分块
@@ -75,7 +75,7 @@ function chunkDocument(content: string): Chunk[] {
     for (let i = 0; i < paragraphs.length; i++) {
       currentChunkContent += paragraphs[i] + '\n\n';
       if ((i + 1) % PARAGRAPHS_PER_CHUNK === 0 || i === paragraphs.length - 1) {
-        paragraphChunks.push({ title: `Part ${paragraphChunks.length + 1}`, content: currentChunkContent.trim() });
+        paragraphChunks.push({ title: `Part ${paragraphChunks.length + 1}`,rawTitle: `Part ${paragraphChunks.length + 1}`, content: currentChunkContent.trim() });
         currentChunkContent = '';
       }
     }
@@ -123,7 +123,7 @@ export const runInferenceWorkflow = async ({
   let chunks = chunkDocument(draftPaperContent);
   chunks = mergeSmallChunks(chunks);
   
-  if (chunks.length === 0) chunks.push({ title: 'Full Document', content: draftPaperContent });
+  if (chunks.length === 0) chunks.push({ title: 'Full Document', rawTitle: 'Full Document', content: draftPaperContent });
 
   let rewrittenConservative = '', rewrittenStandard = '', rewrittenEnhanced = '';
   const failedChunks: number[] = [];
