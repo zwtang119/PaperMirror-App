@@ -54,8 +54,9 @@ ${escapeJsonString(FEW_SHOT_EXAMPLE)}
         documentContext: DocumentContext;
         currentSectionTitle?: string;
     }) => {
-        const relevantSectionSummary = params.currentSectionTitle 
-          ? params.documentContext.sectionSummaries.find(s => s.sectionTitle.toLowerCase().includes(params.currentSectionTitle?.toLowerCase() ?? ''))?.summary
+        // 简洁修复：安全访问sectionSummaries
+        const relevantSectionSummary = (params.currentSectionTitle && params.documentContext?.sectionSummaries)
+          ? params.documentContext.sectionSummaries.find(s => s?.sectionTitle?.toLowerCase().includes(params.currentSectionTitle?.toLowerCase()))?.summary
           : 'N/A';
         
         return `

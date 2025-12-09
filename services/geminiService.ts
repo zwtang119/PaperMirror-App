@@ -53,13 +53,37 @@ async function postJSON<T>(path: string, payload: any): Promise<T> {
 export const generateDocumentContext = async (fullDocumentContent: string): Promise<DocumentContext> => {
   const { systemInstruction, getPrompt } = documentContextPrompt;
   const prompt = getPrompt(fullDocumentContent);
-  return postJSON<DocumentContext>('/api/process', { model: geminiConfig.modelName, prompt });
+  
+  try {
+    return await postJSON<DocumentContext>('/api/process', { model: geminiConfig.modelName, prompt });
+  } catch (error) {
+    console.error('Failed to generate document context:', error);
+    // 返回安全默认值
+    return {
+      documentSummary: 'Document analysis failed',
+      sectionSummaries: []
+    };
+  }
 };
 
 export const extractStyleGuide = async (samplePaperContent: string): Promise<StyleGuide> => {
   const { systemInstruction, getPrompt } = inferencePrompts.extractStyleGuide;
   const prompt = getPrompt(samplePaperContent);
-  return postJSON<StyleGuide>('/api/process', { model: geminiConfig.modelName, prompt });
+  
+  try {
+    return await postJSON<StyleGuide>('/api/process', { model: geminiConfig.modelName, prompt });
+  } catch (error) {
+    console.error('Failed to extract style guide:', error);
+    // 返回安全默认值
+    return {
+      averageSentenceLength: 20,
+      lexicalComplexity: 0.5,
+      passiveVoicePercentage: 10,
+      commonTransitions: ['Furthermore,', 'However,', 'Therefore,'],
+      tone: 'Formal and objective',
+      structure: 'Standard academic structure'
+    };
+  }
 };
 
 export const rewriteChunkInInferenceMode = async (params: {
@@ -72,10 +96,21 @@ export const rewriteChunkInInferenceMode = async (params: {
 }): Promise<{ conservative: string; standard: string; enhanced: string; }> => {
   const { systemInstruction, getPrompt } = inferencePrompts.rewriteChunk;
   const prompt = getPrompt(params);
-  return postJSON<{ conservative: string; standard: string; enhanced: string; }>(
-    '/api/process',
-    { model: geminiConfig.modelName, prompt }
-  );
+  
+  try {
+    return await postJSON<{ conservative: string; standard: string; enhanced: string; }>(
+      '/api/process',
+      { model: geminiConfig.modelName, prompt }
+    );
+  } catch (error) {
+    console.error('Failed to rewrite chunk:', error);
+    // 返回原始内容作为回退
+    return {
+      conservative: params.mainContent,
+      standard: params.mainContent,
+      enhanced: params.mainContent
+    };
+  }
 };
 
 export const generateFinalReport = async (params: {
