@@ -12,12 +12,14 @@ interface WorkflowParams {
 }
 
 interface Chunk {
-  title: string;
+  title: string;       // 显示用
+  rawTitle: string;  // 匹配用
   content: string;
 }
 
-const PARAGRAPHS_PER_CHUNK = 8;
+const PARAGRAPHS_PER_CHUNK = 6;
 const MIN_CHUNK_SIZE = 400;
+const MAX_CHUNK_CHAR = 2000;
 
 function chunkDocument(content: string): Chunk[] {
   const trimmedContent = content.replace(/\r\n/g, '\n').trim();
@@ -32,26 +34,44 @@ function chunkDocument(content: string): Chunk[] {
     '实验', '结果', '讨论', '结论', '参考文献', '致谢', '附录'
   ].join('|');
   
-  const sectionRegex = new RegExp(`(^#+\\s.*|^(?:\\d+\\.?\\s*)?\\b(?:${academicSections})\\b.*$)`, 'im');
+  const sectionRegex = new RegExp(`(^#+\\s+.*|^(?:\\d+\\.?\\s*)?(?:${academicSections}).*$)`, 'im');
   const rawChunks = trimmedContent.split(sectionRegex);
   
   const chunks: Chunk[] = [];
   
   for (let i = 1; i < rawChunks.length; i += 2) {
-    const title = rawChunks[i].replace(/^#+\s/,'').trim();
-    const content = (rawChunks[i] + rawChunks[i+1]).trim();
+    const rawTitle = rawChunks[i].trim();
+    const title = rawTitle.replace(/^#+\s*/,'').replace(/^\d+\.?\s*/,'').trim();
+    const content = (rawChunks[i + 1] ?? '').trim();
     if(content) {
-      chunks.push({ title, content });
+      chunks.push({ title, rawTitle, content });
     }
   }
 
+  // 三重fallback策略
   if (chunks.length <= 1) {
     const paragraphs = trimmedContent.split(/\n\s*\n/).filter(p => p.trim() !== '');
-    if (paragraphs.length === 0 && trimmedContent) return [{ title: 'Full Document', content: trimmedContent }];
 
+    // 第一重：段落分块
+    if (paragraphs.length <= 1) {
+      // 第二重：字符数分块 + 智能边界检测
+      const parts: Chunk[] = [];
+      let start = 0;
+      while (start < trimmedContent.length) {
+        let end = Math.min(start + MAX_CHUNK_CHAR, trimmedContent.length);
+        let boundary = trimmedContent.lastIndexOf('\n\n', end);
+        if (boundary <= start) boundary = trimmedContent.lastIndexOf('\n', end);
+        if (boundary <= start) boundary = end;
+        const segment = trimmedContent.slice(start, boundary).trim();
+        if (segment) parts.push({ title: `Part ${parts.length + 1}`, content: segment });
+        start = boundary < trimmedContent.length ? boundary + 1 : boundary;
+      }
+      return parts.length ? parts : [{ title: 'Full Document', content: trimmedContent }];
+    }
+
+    // 第三重：段落分组分块
     const paragraphChunks: Chunk[] = [];
     let currentChunkContent = '';
-
     for (let i = 0; i < paragraphs.length; i++) {
       currentChunkContent += paragraphs[i] + '\n\n';
       if ((i + 1) % PARAGRAPHS_PER_CHUNK === 0 || i === paragraphs.length - 1) {
@@ -74,7 +94,8 @@ function mergeSmallChunks(chunks: Chunk[]): Chunk[] {
   for (let i = 1; i < chunks.length; i++) {
     const current = chunks[i];
     
-    if (tempChunk.content.length < MIN_CHUNK_SIZE) {
+    const wouldMergeLen = tempChunk.content.length + 2 + current.content.length;
+    if (tempChunk.content.length < MIN_CHUNK_SIZE && wouldMergeLen <= MAX_CHUNK_CHAR) {
       tempChunk.content += '\n\n' + current.content;
       tempChunk.title = tempChunk.title.includes('Merged') ? tempChunk.title : `${tempChunk.title} + ${current.title}`;
     } else {
@@ -125,7 +146,7 @@ export const runInferenceWorkflow = async ({
         contextAfter, 
         styleGuide, 
         documentContext, 
-        currentSectionTitle: title
+        currentSectionTitle: chunks[i].rawTitle
       });
       
       rewrittenConservative += rewrittenChunk.conservative + '\n\n';
@@ -143,7 +164,7 @@ export const runInferenceWorkflow = async ({
         }
       });
       
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 600));
       
     } catch (chunkError) {
       console.error(`Chunk ${i + 1} failed:`, chunkError);
