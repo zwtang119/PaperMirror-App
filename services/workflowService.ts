@@ -146,7 +146,7 @@ export const runInferenceWorkflow = async ({
         contextAfter, 
         styleGuide, 
         documentContext, 
-        currentSectionTitle: chunks[i].rawTitle
+        currentSectionTitle: chunks[i].rawTitle || ''
       });
       
       rewrittenConservative += rewrittenChunk.conservative + '\n\n';
