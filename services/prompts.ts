@@ -54,8 +54,10 @@ ${escapeJsonString(FEW_SHOT_EXAMPLE)}
         documentContext: DocumentContext;
         currentSectionTitle?: string;
     }) => {
-        const relevantSectionSummary = params.currentSectionTitle 
-          ? params.documentContext.sectionSummaries.find(s => s.sectionTitle.toLowerCase().includes(params.currentSectionTitle?.toLowerCase() ?? ''))?.summary
+        const normalizedTitle = (params.currentSectionTitle || '').toLowerCase();
+        const sections = params.documentContext.sectionSummaries || [];
+        const relevantSectionSummary = normalizedTitle
+          ? sections.find(s => (s.sectionTitle || '').toLowerCase().includes(normalizedTitle))?.summary ?? 'N/A'
           : 'N/A';
         
         return `
