@@ -9,6 +9,11 @@ import { splitSentencesCN } from './text';
 // Rule version for tracking
 const RULES_VERSION = '1.0.0';
 
+// Chinese technical term suffixes for extraction
+const CHINESE_TECH_SUFFIXES = [
+  '技术', '方法', '算法', '模型', '系统', '网络', '框架', '机制', '理论', '分析'
+];
+
 // Patterns indicating citation need
 const CITATION_PATTERNS = {
   background: [
@@ -144,8 +149,8 @@ function extractKeyTerms(sentence: string): string[] {
     terms.push(match.replace(/[""]/g, ''));
   }
   
-  // Extract English terms
-  const englishMatches = sentence.match(/[A-Za-z][A-Za-z0-9-]+(?:\s+[A-Za-z][A-Za-z0-9-]+)*/g) || [];
+  // Extract English terms (avoiding hyphen-only matches)
+  const englishMatches = sentence.match(/[A-Za-z][A-Za-z0-9]*(?:-[A-Za-z0-9]+)*/g) || [];
   for (const match of englishMatches) {
     if (match.length >= 3 && !/^(the|and|for|with|from|this|that|these|those|are|was|were|been|have|has|had)$/i.test(match)) {
       terms.push(match);
@@ -153,7 +158,8 @@ function extractKeyTerms(sentence: string): string[] {
   }
   
   // Extract Chinese technical terms (rough heuristic: sequences of 2-6 characters that look technical)
-  const chineseMatches = sentence.match(/[\u4e00-\u9fa5]{2,6}(?:技术|方法|算法|模型|系统|网络|框架|机制|理论|分析)/g) || [];
+  const techSuffixPattern = CHINESE_TECH_SUFFIXES.join('|');
+  const chineseMatches = sentence.match(new RegExp(`[\\u4e00-\\u9fa5]{2,6}(?:${techSuffixPattern})`, 'g')) || [];
   terms.push(...chineseMatches);
   
   // Deduplicate and limit

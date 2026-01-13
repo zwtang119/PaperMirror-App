@@ -19,11 +19,11 @@ export function extractNumbers(text: string): Set<string> {
   // - Scientific notation: 1.5e-3, 2E6
   // - Numbers with units: 10mm, 5kg, 100℃
   const patterns = [
-    /\d+\.?\d*%/g,                    // Percentages
-    /\d+\.?\d*[eE][+-]?\d+/g,         // Scientific notation
-    /\d+\.?\d*(?:mm|cm|m|km|mg|g|kg|ml|L|℃|°C|Hz|kHz|MHz|GHz|ms|s|min|h)/gi, // With units
-    /\d+\.\d+/g,                       // Decimals
-    /\d{2,}/g,                         // Integers (2+ digits to avoid single digits)
+    /\d+(?:\.\d+)?%/g,                    // Percentages
+    /\d+(?:\.\d+)?[eE][+-]?\d+/g,         // Scientific notation
+    /\d+(?:\.\d+)?(?:mm|cm|m|km|mg|g|kg|ml|L|℃|°C|Hz|kHz|MHz|GHz|ms|s|min|h)/gi, // With units
+    /\d+\.\d+/g,                          // Decimals
+    /\d{2,}/g,                            // Integers (2+ digits to avoid single digits)
   ];
   
   for (const pattern of patterns) {

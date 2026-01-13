@@ -13,6 +13,22 @@ const DEFAULT_WEIGHTS = {
   templates: 0.2,
 };
 
+// Expected max differences for normalization
+const SENTENCE_LENGTH_MAX_EXPECTED = {
+  mean: 50,      // Max expected difference in mean sentence length
+  percentile: 50, // Max expected difference in p50
+  p90: 100,      // Max expected difference in p90
+  longRate: 100, // Max expected difference in long sentence rate (percentage)
+};
+
+const PUNCTUATION_MAX_EXPECTED = {
+  comma: 30,        // Max expected comma density difference per 1k chars
+  semicolon: 10,    // Max expected semicolon density difference
+  parenthesis: 20,  // Max expected parenthesis density difference
+};
+
+const TEMPLATE_MAX_EXPECTED = 5; // Max expected template density difference per 1k chars
+
 /**
  * Calculate normalized distance between two values.
  * Returns 0 when values are identical, 1 when maximally different.
@@ -31,10 +47,10 @@ function sentenceLengthDistance(
   target: DetailedMetrics['sentenceLength'],
   sample: DetailedMetrics['sentenceLength']
 ): number {
-  const meanDiff = normalizedDiff(target.mean, sample.mean, 50);
-  const p50Diff = normalizedDiff(target.p50, sample.p50, 50);
-  const p90Diff = normalizedDiff(target.p90, sample.p90, 100);
-  const longRateDiff = normalizedDiff(target.longRate50, sample.longRate50, 100);
+  const meanDiff = normalizedDiff(target.mean, sample.mean, SENTENCE_LENGTH_MAX_EXPECTED.mean);
+  const p50Diff = normalizedDiff(target.p50, sample.p50, SENTENCE_LENGTH_MAX_EXPECTED.percentile);
+  const p90Diff = normalizedDiff(target.p90, sample.p90, SENTENCE_LENGTH_MAX_EXPECTED.p90);
+  const longRateDiff = normalizedDiff(target.longRate50, sample.longRate50, SENTENCE_LENGTH_MAX_EXPECTED.longRate);
   
   // Weighted combination
   return meanDiff * 0.4 + p50Diff * 0.3 + p90Diff * 0.2 + longRateDiff * 0.1;
@@ -83,9 +99,9 @@ function punctuationDistance(
   target: DetailedMetrics['punctuationDensity'],
   sample: DetailedMetrics['punctuationDensity']
 ): number {
-  const commaDiff = normalizedDiff(target.comma, sample.comma, 30);
-  const semicolonDiff = normalizedDiff(target.semicolon, sample.semicolon, 10);
-  const parenthesisDiff = normalizedDiff(target.parenthesis, sample.parenthesis, 20);
+  const commaDiff = normalizedDiff(target.comma, sample.comma, PUNCTUATION_MAX_EXPECTED.comma);
+  const semicolonDiff = normalizedDiff(target.semicolon, sample.semicolon, PUNCTUATION_MAX_EXPECTED.semicolon);
+  const parenthesisDiff = normalizedDiff(target.parenthesis, sample.parenthesis, PUNCTUATION_MAX_EXPECTED.parenthesis);
   
   return commaDiff * 0.5 + semicolonDiff * 0.25 + parenthesisDiff * 0.25;
 }
@@ -99,7 +115,7 @@ function templateDistance(
   sample: DetailedMetrics['templateCounts']
 ): number {
   // Compare per-thousand-chars density
-  return normalizedDiff(target.perThousandChars, sample.perThousandChars, 5);
+  return normalizedDiff(target.perThousandChars, sample.perThousandChars, TEMPLATE_MAX_EXPECTED);
 }
 
 /**
