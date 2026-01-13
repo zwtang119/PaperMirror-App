@@ -3,7 +3,13 @@ import {
   rewriteChunkInInferenceMode, 
   generateDocumentContext
 } from './geminiService';
-import type { MigrationResult, ProgressUpdate, StyleGuide } from '../types';
+import type { MigrationResult, ProgressUpdate, StyleGuide, AnalysisReport } from '../types';
+import { 
+  calculateMetrics, 
+  generateMirrorScore, 
+  calculateFidelityGuardrails, 
+  generateCitationSuggestions 
+} from '../utils/analysis';
 
 interface WorkflowParams {
   samplePaperContent: string;
@@ -176,23 +182,33 @@ export const runInferenceWorkflow = async ({
     }
   }
 
-  // ⚡ 轻量级Mock：零成本、零503、保持类型兼容
-  const analysisReport = {
-    status: 'complete' as const,
+  // Generate real analysis report
+  onProgress({ stage: 'Generating analysis report...' });
+  
+  const sampleMetrics = calculateMetrics(samplePaperContent);
+  const draftMetrics = calculateMetrics(draftPaperContent);
+  const standardMetrics = calculateMetrics(rewrittenStandard);
+  
+  const mirrorScore = generateMirrorScore(sampleMetrics, draftMetrics, standardMetrics);
+  const fidelityGuardrails = calculateFidelityGuardrails(draftPaperContent, rewrittenStandard);
+  const citationSuggestions = generateCitationSuggestions(draftPaperContent);
+  
+  const analysisReport: AnalysisReport = {
+    status: failedChunks.length === 0 ? 'complete' : 'partial',
+    message: failedChunks.length > 0 
+      ? `Processing completed with ${failedChunks.length} failed chunk(s): ${failedChunks.join(', ')}`
+      : undefined,
+    mirrorScore,
     styleComparison: {
-      samplePaper: { 
-        averageSentenceLength: 22.5, 
-        lexicalComplexity: 0.78, 
-        passiveVoicePercentage: 15.2 
-      },
-      draftPaper: { 
-        averageSentenceLength: 0, 
-        lexicalComplexity: 0, 
-        passiveVoicePercentage: 0 
-      }
+      sample: sampleMetrics,
+      draft: draftMetrics,
+      rewrittenStandard: standardMetrics,
     },
+    fidelityGuardrails,
+    citationSuggestions,
+    // Legacy fields for backward compatibility
     changeRatePerParagraph: [],
-    consistencyScore: 0
+    consistencyScore: mirrorScore.standardToSample / 100,
   };
   
 
