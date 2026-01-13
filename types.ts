@@ -10,15 +10,91 @@ export interface StyleGuide extends StyleMetrics {
   structure: string;
 }
 
-export interface AnalysisReport {
-  status: 'coming_soon' | 'complete'; 
-  message?: string;                    
-  styleComparison?: {         
-    samplePaper: StyleMetrics;
-    draftPaper: StyleMetrics;
+// New detailed metrics for three-way comparison
+export interface DetailedMetrics {
+  sentenceLength: {
+    mean: number;
+    p50: number;
+    p90: number;
+    longRate50: number; // percentage of sentences > 50 chars
   };
-  changeRatePerParagraph?: number[]; 
-  consistencyScore?: number; 
+  punctuationDensity: {
+    comma: number;     // per 1000 chars
+    semicolon: number;
+    parenthesis: number;
+  };
+  connectorCounts: {
+    causal: number;     // 因此, 所以, 由于, 因为
+    adversative: number; // 然而, 但是, 不过, 尽管
+    additive: number;    // 此外, 另外, 同时, 并且
+    emphatic: number;    // 尤其, 特别, 值得注意
+    total: number;
+  };
+  templateCounts: {
+    count: number;       // total template phrases found
+    perThousandChars: number;
+  };
+  textLengthChars: number;
+  sentenceCount: number;
+}
+
+export interface MirrorScore {
+  draftToSample: number;    // 0-100
+  standardToSample: number; // 0-100
+  improvement: number;      // standardToSample - draftToSample
+  weights: {
+    sentence: number;
+    connectors: number;
+    punctuation: number;
+    templates: number;
+  };
+}
+
+export interface FidelityAlert {
+  type: 'number_loss' | 'acronym_change' | 'unit_loss';
+  sentenceIndex: number;
+  detail?: string;
+}
+
+export interface FidelityGuardrails {
+  numberRetentionRate: number;
+  acronymRetentionRate: number;
+  alerts: FidelityAlert[];
+}
+
+export interface CitationSuggestion {
+  sentenceIndex: number;
+  sentenceText: string;
+  reason: 'background' | 'definition' | 'method' | 'comparison' | 'statistic';
+  queries: string[];
+}
+
+export interface AnalysisReport {
+  status: 'complete' | 'partial' | 'error';
+  message?: string;
+  
+  // New: Mirror Score (main narrative: standard is closer to sample)
+  mirrorScore?: MirrorScore;
+  
+  // New: Three-way style comparison (sample vs draft vs rewritten standard)
+  styleComparison?: {
+    sample: DetailedMetrics;
+    draft: DetailedMetrics;
+    rewrittenStandard: DetailedMetrics;
+  };
+  
+  // New: Fidelity guardrails (draft vs standard)
+  fidelityGuardrails?: FidelityGuardrails;
+  
+  // New: Citation suggestions (only for draft)
+  citationSuggestions?: {
+    rulesVersion: string;
+    items: CitationSuggestion[];
+  };
+  
+  // Legacy fields for backward compatibility
+  changeRatePerParagraph?: number[];
+  consistencyScore?: number;
 }
 
 export type AppStatus = 'idle' | 'loading' | 'success' | 'error';
