@@ -122,3 +122,62 @@ export interface MigrationResult {
   enhanced?: string;
   analysisReport?: AnalysisReport;
 }
+
+// ============ Sentence Edits Mode Types ============
+
+/**
+ * Token types for tokenized document structure.
+ * - 'sentence': A rewritable sentence with an index
+ * - 'sep': A paragraph separator (never sent to model, never replaced)
+ */
+export type TokenKind = 'sentence' | 'sep';
+
+/**
+ * A sentence token that can be rewritten.
+ */
+export interface SentenceToken {
+  kind: 'sentence';
+  index: number;
+  text: string;
+}
+
+/**
+ * A separator token that preserves paragraph structure.
+ * These are never sent to the model and are always preserved as-is.
+ */
+export interface SeparatorToken {
+  kind: 'sep';
+  text: string; // Usually '\n\n' or '\n'
+}
+
+/**
+ * Union type for all token types.
+ */
+export type Token = SentenceToken | SeparatorToken;
+
+/**
+ * A replacement instruction from the model.
+ * The index corresponds to the sentence index in the tokenized document.
+ */
+export interface Replacement {
+  index: number;
+  text: string;
+}
+
+/**
+ * Response format from the sentence rewrite API.
+ */
+export interface ReplacementsResponse {
+  replacements: Replacement[];
+}
+
+/**
+ * Result of processing a batch of sentences.
+ */
+export interface BatchResult {
+  success: boolean;
+  replacements: Replacement[];
+  failedIndices: number[];
+  durationMs: number;
+  error?: string;
+}

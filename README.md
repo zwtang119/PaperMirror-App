@@ -74,6 +74,51 @@ export const ANALYSIS_MODE: AnalysisMode = 'full'; // or 'none' or 'fidelityOnly
 
 ---
 
+## ⚙️ Rewrite Mode Configuration
+
+PaperMirror supports two rewrite modes via the `REWRITE_MODE` setting in `services/config.ts`:
+
+| Mode | Description | Output |
+| :--- | :--- | :--- |
+| `sentenceEdits` **(default)** | Sentence-by-sentence replacement with adaptive batching | `standard` only |
+| `fullText` | Original full-text chunk rewriting | `conservative`, `standard`, `enhanced` |
+
+### Why Sentence Edits Mode?
+
+The new `sentenceEdits` mode was introduced to improve reliability for long Chinese documents (3000-8000 characters):
+
+1. **Avoids Timeouts**: By processing sentences in small batches (default 20), each API request stays well under the 60-second Vercel limit.
+2. **Preserves Structure**: Paragraph separators (`\n\n`) are locked as immutable tokens and never sent to the model, ensuring document structure is preserved.
+3. **Graceful Degradation**: If a batch fails, the system automatically reduces batch size and retries. Individual failed sentences preserve their original text.
+4. **Adaptive Batching**: Batch size adjusts based on response times - degrading when slow, upgrading when consistently fast.
+
+### Batching Constants
+
+The following constants can be adjusted in `services/config.ts`:
+
+```typescript
+export const batchingConfig = {
+  INITIAL_BATCH_SIZE: 20,      // Starting number of sentences per batch
+  MAX_BATCH_SIZE: 25,          // Maximum batch size
+  SLOW_CALL_THRESHOLD_MS: 40000, // Degrade if request takes longer than 40s
+  TARGET_FAST_MS: 15000,       // Upgrade after 3 consecutive fast calls
+  MAX_RETRY_PER_BATCH: 2,      // Retries before falling back to smaller batch
+  DEGRADATION_CHAIN: [20, 10, 5, 1], // Fallback batch sizes
+  MAX_SENTENCE_CHARS: 400,     // Split sentences longer than this
+  FORCE_SPLIT_CHUNK_SIZE: 280, // Target size for force-split segments
+};
+```
+
+### Switching Back to Full Text Mode
+
+To revert to the original behavior with three output intensities:
+
+```typescript
+export const REWRITE_MODE: RewriteMode = 'fullText';
+```
+
+---
+
 ## 🙋‍♀️ FAQ
 
 **Q: Is my unpublished data safe?**
