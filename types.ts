@@ -51,8 +51,8 @@ export interface MirrorScore {
 }
 
 export interface FidelityAlert {
-  type: 'number_loss' | 'acronym_change' | 'unit_loss';
-  sentenceIndex: number;
+  type: 'number_loss' | 'acronym_change' | 'other';
+  sentenceIndex?: number;
   detail?: string;
 }
 
@@ -70,31 +70,21 @@ export interface CitationSuggestion {
 }
 
 export interface AnalysisReport {
-  status: 'complete' | 'partial' | 'error';
+  status: 'partial' | 'complete';
   message?: string;
-  
-  // New: Mirror Score (main narrative: standard is closer to sample)
+  fidelityGuardrails: FidelityGuardrails;
+
+  // Optional advanced metrics (available in full analysis mode)
   mirrorScore?: MirrorScore;
-  
-  // New: Three-way style comparison (sample vs draft vs rewritten standard)
   styleComparison?: {
     sample: DetailedMetrics;
     draft: DetailedMetrics;
     rewrittenStandard: DetailedMetrics;
   };
-  
-  // New: Fidelity guardrails (draft vs standard)
-  fidelityGuardrails?: FidelityGuardrails;
-  
-  // New: Citation suggestions (only for draft)
   citationSuggestions?: {
     rulesVersion: string;
     items: CitationSuggestion[];
   };
-  
-  // Legacy fields for backward compatibility
-  changeRatePerParagraph?: number[];
-  consistencyScore?: number;
 }
 
 export type AppStatus = 'idle' | 'loading' | 'success' | 'error';
@@ -120,5 +110,5 @@ export interface MigrationResult {
   conservative?: string;
   standard?: string;
   enhanced?: string;
-  analysisReport?: AnalysisReport;
+  analysisReport?: AnalysisReport | null;
 }

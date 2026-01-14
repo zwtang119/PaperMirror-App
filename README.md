@@ -49,9 +49,22 @@ We understand that unpublished research is highly sensitive intellectual propert
 
 ## ✨ Key Features
 
-*   **Quantitative Analysis Report**: Get a detailed JSON report comparing your draft's metrics before and after migration.
+*   **Fidelity Guardrails (zero-token)**: Default report focuses on number/acronym retention without extra LLM calls.
+*   **Quantitative Analysis Report (full mode optional)**: Enable full metrics and citation hints via `config.ts` when needed.
 *   **Stream Processing**: Capable of handling full thesis documents without browser timeouts or crashes.
 *   **Bilingual UI**: Native support for English and Chinese interfaces.
+
+---
+
+## ⚙️ Analysis Modes
+
+Configure analysis behavior in [`config.ts`](./config.ts):
+
+| Mode | Behavior |
+| --- | --- |
+| `fidelityOnly` (default) | Runs local fidelity guardrails (number/acronym retention + alerts). |
+| `none` | Skips report generation entirely for fastest turnaround. |
+| `full` | Restores the detailed mirror/style/citation analysis pipeline. |
 
 ---
 

@@ -68,16 +68,21 @@ export const useMigrationWorkflow = () => {
       setResult(migrationResult);
 
       if (migrationResult.standard) {
-          const conservativeBlob = new Blob([migrationResult.conservative!], { type: 'text/markdown;charset=utf-8' });
-          const standardBlob = new Blob([migrationResult.standard!], { type: 'text/markdown;charset=utf-8' });
-          const enhancedBlob = new Blob([migrationResult.enhanced!], { type: 'text/markdown;charset=utf-8' });
+        const conservativeBlob = new Blob([migrationResult.conservative!], { type: 'text/markdown;charset=utf-8' });
+        const standardBlob = new Blob([migrationResult.standard!], { type: 'text/markdown;charset=utf-8' });
+        const enhancedBlob = new Blob([migrationResult.enhanced!], { type: 'text/markdown;charset=utf-8' });
+        const links: { [key: string]: string } = {
+          conservative: URL.createObjectURL(conservativeBlob),
+          standard: URL.createObjectURL(standardBlob),
+          enhanced: URL.createObjectURL(enhancedBlob),
+        };
+
+        if (migrationResult.analysisReport) {
           const reportBlob = new Blob([JSON.stringify(migrationResult.analysisReport, null, 2)], { type: 'application/json;charset=utf-8' });
-          setDownloadLinks({
-            conservative: URL.createObjectURL(conservativeBlob),
-            standard: URL.createObjectURL(standardBlob),
-            enhanced: URL.createObjectURL(enhancedBlob),
-            report: URL.createObjectURL(reportBlob),
-          });
+          links.report = URL.createObjectURL(reportBlob);
+        }
+
+        setDownloadLinks(links);
       }
 
       setStatus('success');

@@ -26,6 +26,7 @@ const DownloadButton: React.FC<{ href?: string; downloadName: string; children: 
 
 const SuccessResultView: React.FC<SuccessResultViewProps> = ({ result, downloadLinks }) => {
   const [activeTab, setActiveTab] = useState<Tab>('standard');
+  const reportAvailable = Boolean(result.analysisReport);
 
   const contentKey = ['conservative', 'standard', 'enhanced'].includes(activeTab)
       ? activeTab as 'conservative' | 'standard' | 'enhanced'
@@ -58,8 +59,14 @@ const SuccessResultView: React.FC<SuccessResultViewProps> = ({ result, downloadL
     { id: 'conservative', label: 'Conservative' },
     { id: 'standard', label: 'Standard' },
     { id: 'enhanced', label: 'Enhanced' },
-    { id: 'report', label: 'Analysis Report' },
+    ...(reportAvailable ? [{ id: 'report' as Tab, label: 'Analysis Report' }] : []),
   ];
+
+  useEffect(() => {
+    if (!reportAvailable && activeTab === 'report') {
+      setActiveTab('standard');
+    }
+  }, [reportAvailable]);
   
   return (
     <div>

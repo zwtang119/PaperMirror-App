@@ -137,67 +137,74 @@ const CitationDisplay: React.FC<{ suggestions: CitationSuggestion[] }> = ({ sugg
 };
 
 const AnalysisReport: React.FC<AnalysisReportProps> = ({ report }) => {
+  const fidelity = report.fidelityGuardrails;
+  if (!fidelity) return null;
+
   const mirrorScore = report.mirrorScore;
   const styleComparison = report.styleComparison;
-  const fidelity = report.fidelityGuardrails;
   const citations = report.citationSuggestions;
+  const hasAdvanced = Boolean(mirrorScore || styleComparison || citations);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-bold text-slate-900 mb-2">Style Analysis Report</h2>
-        {report.status !== 'complete' && report.message && (
-          <p className="text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded p-2">
-            {report.message}
-          </p>
-        )}
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold text-slate-900">🛡️ Fidelity Check</h2>
+        <span className="text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+          {report.status === 'complete' ? 'Complete' : 'Partial'}
+        </span>
       </div>
 
-      {/* Mirror Score Section */}
-      {mirrorScore && (
-        <div>
-          <h3 className="text-lg font-semibold text-slate-800 mb-3">🎯 Mirror Score</h3>
-          <MirrorScoreDisplay 
-            draftScore={mirrorScore.draftToSample}
-            standardScore={mirrorScore.standardToSample}
-            improvement={mirrorScore.improvement}
-          />
-        </div>
+      {report.message && (
+        <p className="text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded p-2">
+          {report.message}
+        </p>
       )}
 
-      {/* Three-Way Style Comparison */}
-      {styleComparison && (
-        <div>
-          <h3 className="text-lg font-semibold text-slate-800 mb-3">📊 Style Comparison</h3>
-          <div className="space-y-3">
-            <DetailedMetricsDisplay title="📄 Sample Paper (Target)" metrics={styleComparison.sample} />
-            <DetailedMetricsDisplay title="📝 Original Draft" metrics={styleComparison.draft} />
-            <DetailedMetricsDisplay title="✨ Rewritten Standard" metrics={styleComparison.rewrittenStandard} highlight />
+      <FidelityDisplay 
+        numberRate={fidelity.numberRetentionRate}
+        acronymRate={fidelity.acronymRetentionRate}
+        alerts={fidelity.alerts.slice(0, 5)}
+      />
+
+      {hasAdvanced && (
+        <details className="border border-slate-200 rounded-lg bg-slate-50">
+          <summary className="cursor-pointer px-3 py-2 text-sm font-semibold text-slate-700">
+            Advanced analysis (full mode)
+          </summary>
+          <div className="space-y-4 p-3 pt-0">
+            {mirrorScore && (
+              <div>
+                <h3 className="text-sm font-semibold text-slate-800 mb-2">🎯 Mirror Score</h3>
+                <MirrorScoreDisplay 
+                  draftScore={mirrorScore.draftToSample}
+                  standardScore={mirrorScore.standardToSample}
+                  improvement={mirrorScore.improvement}
+                />
+              </div>
+            )}
+
+            {styleComparison && (
+              <div>
+                <h3 className="text-sm font-semibold text-slate-800 mb-2">📊 Style Comparison</h3>
+                <div className="space-y-3">
+                  <DetailedMetricsDisplay title="📄 Sample Paper (Target)" metrics={styleComparison.sample} />
+                  <DetailedMetricsDisplay title="📝 Original Draft" metrics={styleComparison.draft} />
+                  <DetailedMetricsDisplay title="✨ Rewritten Standard" metrics={styleComparison.rewrittenStandard} highlight />
+                </div>
+              </div>
+            )}
+
+            {citations && (
+              <div>
+                <h3 className="text-sm font-semibold text-slate-800 mb-2">
+                  📚 Citation Suggestions 
+                  <span className="text-xs font-normal text-slate-500 ml-2">({citations.items.length} found)</span>
+                </h3>
+                <CitationDisplay suggestions={citations.items} />
+              </div>
+            )}
           </div>
-        </div>
-      )}
-
-      {/* Fidelity Guardrails */}
-      {fidelity && (
-        <div>
-          <h3 className="text-lg font-semibold text-slate-800 mb-3">🛡️ Fidelity Guardrails</h3>
-          <FidelityDisplay 
-            numberRate={fidelity.numberRetentionRate}
-            acronymRate={fidelity.acronymRetentionRate}
-            alerts={fidelity.alerts}
-          />
-        </div>
-      )}
-
-      {/* Citation Suggestions */}
-      {citations && (
-        <div>
-          <h3 className="text-lg font-semibold text-slate-800 mb-3">
-            📚 Citation Suggestions 
-            <span className="text-sm font-normal text-slate-500 ml-2">({citations.items.length} found)</span>
-          </h3>
-          <CitationDisplay suggestions={citations.items} />
-        </div>
+        </details>
       )}
     </div>
   );

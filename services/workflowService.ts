@@ -1,15 +1,16 @@
-import { 
-  extractStyleGuide, 
-  rewriteChunkInInferenceMode, 
+import {
+  extractStyleGuide,
+  rewriteChunkInInferenceMode,
   generateDocumentContext
 } from './geminiService';
 import type { MigrationResult, ProgressUpdate, StyleGuide, AnalysisReport } from '../types';
-import { 
-  calculateMetrics, 
-  generateMirrorScore, 
-  calculateFidelityGuardrails, 
-  generateCitationSuggestions 
+import {
+  calculateMetrics,
+  generateMirrorScore,
+  calculateFidelityGuardrails,
+  generateCitationSuggestions
 } from '../utils/analysis';
+import ANALYSIS_MODE from '../config';
 
 interface WorkflowParams {
   samplePaperContent: string;
@@ -182,39 +183,51 @@ export const runInferenceWorkflow = async ({
     }
   }
 
-  // Generate real analysis report
-  onProgress({ stage: 'Generating analysis report...' });
-  
-  const sampleMetrics = calculateMetrics(samplePaperContent);
-  const draftMetrics = calculateMetrics(draftPaperContent);
-  const standardMetrics = calculateMetrics(rewrittenStandard);
-  
-  const mirrorScore = generateMirrorScore(sampleMetrics, draftMetrics, standardMetrics);
-  const fidelityGuardrails = calculateFidelityGuardrails(draftPaperContent, rewrittenStandard);
-  const citationSuggestions = generateCitationSuggestions(draftPaperContent);
-  
-  const analysisReport: AnalysisReport = {
-    status: failedChunks.length === 0 ? 'complete' : 'partial',
-    message: failedChunks.length > 0 
-      ? `Processing completed with ${failedChunks.length} failed chunk(s): ${failedChunks.join(', ')}`
-      : undefined,
-    mirrorScore,
-    styleComparison: {
-      sample: sampleMetrics,
-      draft: draftMetrics,
-      rewrittenStandard: standardMetrics,
-    },
-    fidelityGuardrails,
-    citationSuggestions,
-    // Legacy fields for backward compatibility
-    changeRatePerParagraph: [],
-    consistencyScore: mirrorScore.standardToSample / 100,
-  };
-  
+  let analysisReport: AnalysisReport | null = null;
 
-  return { 
-    conservative: rewrittenConservative.trim(), 
-    standard: rewrittenStandard.trim(), 
+  if (ANALYSIS_MODE === 'none') {
+    onProgress({ stage: 'Analysis disabled (mode: none).' });
+  } else {
+    onProgress({ stage: 'Generating analysis report...' });
+
+    const fidelityGuardrails = calculateFidelityGuardrails(draftPaperContent, rewrittenStandard);
+
+    if (ANALYSIS_MODE === 'fidelityOnly') {
+      analysisReport = {
+        status: 'partial',
+        message: failedChunks.length > 0
+          ? `Processing completed with ${failedChunks.length} failed chunk(s): ${failedChunks.join(', ')}`
+          : undefined,
+        fidelityGuardrails,
+      };
+    } else {
+      const sampleMetrics = calculateMetrics(samplePaperContent);
+      const draftMetrics = calculateMetrics(draftPaperContent);
+      const standardMetrics = calculateMetrics(rewrittenStandard);
+
+      const mirrorScore = generateMirrorScore(sampleMetrics, draftMetrics, standardMetrics);
+      const citationSuggestions = generateCitationSuggestions(draftPaperContent);
+
+      analysisReport = {
+        status: failedChunks.length === 0 ? 'complete' : 'partial',
+        message: failedChunks.length > 0
+          ? `Processing completed with ${failedChunks.length} failed chunk(s): ${failedChunks.join(', ')}`
+          : undefined,
+        mirrorScore,
+        styleComparison: {
+          sample: sampleMetrics,
+          draft: draftMetrics,
+          rewrittenStandard: standardMetrics,
+        },
+        fidelityGuardrails,
+        citationSuggestions,
+      };
+    }
+  }
+
+  return {
+    conservative: rewrittenConservative.trim(),
+    standard: rewrittenStandard.trim(),
     enhanced: rewrittenEnhanced.trim(),
     analysisReport
   };
