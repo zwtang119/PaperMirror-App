@@ -186,6 +186,12 @@ export const runInferenceWorkflow = async ({
   // Generate analysis report based on ANALYSIS_MODE
   let analysisReport: AnalysisReport | undefined;
   
+  // Common status fields for reports
+  const reportStatus = failedChunks.length === 0 ? 'complete' : 'partial';
+  const reportMessage = failedChunks.length > 0 
+    ? `Processing completed with ${failedChunks.length} failed chunk(s): ${failedChunks.join(', ')}`
+    : undefined;
+  
   if (ANALYSIS_MODE === 'none') {
     // No analysis report
     analysisReport = undefined;
@@ -195,10 +201,8 @@ export const runInferenceWorkflow = async ({
     const fidelityGuardrails = calculateFidelityGuardrails(draftPaperContent, rewrittenStandard);
     
     analysisReport = {
-      status: failedChunks.length === 0 ? 'complete' : 'partial',
-      message: failedChunks.length > 0 
-        ? `Processing completed with ${failedChunks.length} failed chunk(s): ${failedChunks.join(', ')}`
-        : undefined,
+      status: reportStatus,
+      message: reportMessage,
       fidelityGuardrails,
     };
   } else {
@@ -214,10 +218,8 @@ export const runInferenceWorkflow = async ({
     const citationSuggestions = generateCitationSuggestions(draftPaperContent);
     
     analysisReport = {
-      status: failedChunks.length === 0 ? 'complete' : 'partial',
-      message: failedChunks.length > 0 
-        ? `Processing completed with ${failedChunks.length} failed chunk(s): ${failedChunks.join(', ')}`
-        : undefined,
+      status: reportStatus,
+      message: reportMessage,
       mirrorScore,
       styleComparison: {
         sample: sampleMetrics,
