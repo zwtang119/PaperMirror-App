@@ -49,9 +49,28 @@ We understand that unpublished research is highly sensitive intellectual propert
 
 ## ✨ Key Features
 
-*   **Quantitative Analysis Report**: Get a detailed JSON report comparing your draft's metrics before and after migration.
+*   **Three Rewriting Intensities**: Generate *Conservative*, *Standard*, and *Enhanced* versions of your text simultaneously.
+*   **Fidelity Check (Default)**: Zero-token, local-rules-only verification that numbers and acronyms are preserved during rewriting.
 *   **Stream Processing**: Capable of handling full thesis documents without browser timeouts or crashes.
 *   **Bilingual UI**: Native support for English and Chinese interfaces.
+
+---
+
+## ⚙️ Analysis Mode Configuration
+
+PaperMirror supports three analysis modes via the `ANALYSIS_MODE` setting in `services/config.ts`:
+
+| Mode | Description | Token Usage |
+| :--- | :--- | :--- |
+| `fidelityOnly` **(default)** | Only fidelity guardrails (number/acronym retention) | **Zero tokens** |
+| `none` | No analysis report, only text output | Zero tokens |
+| `full` | Complete report with mirror score, style comparison, and citation suggestions | Minimal (local calculation) |
+
+To switch modes, edit `services/config.ts`:
+
+```typescript
+export const ANALYSIS_MODE: AnalysisMode = 'full'; // or 'none' or 'fidelityOnly'
+```
 
 ---
 
