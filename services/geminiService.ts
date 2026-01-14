@@ -1,13 +1,18 @@
-import type { AnalysisReport, StyleGuide, DocumentContext } from '../types';
-import { inferencePrompts, documentContextPrompt } from './prompts';
+import type { AnalysisReport, StyleGuide, DocumentContext, ReplacementsResponse, SentenceToken } from '../types';
+import { inferencePrompts, documentContextPrompt, sentenceRewritePrompt, SentenceForRewrite } from './prompts';
 import { geminiConfig } from './config';
 
 const BASE_URL = import.meta.env.VITE_PROXY_BASE_URL || '';
 
-async function postJSON<T>(path: string, payload: any): Promise<T> {
+// Timeout for regular requests (60s)
+const DEFAULT_TIMEOUT_MS = 60000;
+// Extended timeout for sentence rewrite requests (75s to give buffer before Vercel 60s limit)
+const SENTENCE_REWRITE_TIMEOUT_MS = 75000;
+
+async function postJSON<T>(path: string, payload: any, timeoutMs: number = DEFAULT_TIMEOUT_MS): Promise<T> {
   const url = `${BASE_URL}${path}`;
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 60000);
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
   let rawText = ''; // 保留原文，方便调试
 
   try {
@@ -159,3 +164,62 @@ async function generateStructured<T>(prompt: string, systemInstruction: string):
     return postJSON<T>('/api/process', { model: geminiConfig.modelName, prompt });
   }
 }
+
+// ---------- Sentence Edits Mode ----------
+
+/**
+ * Rewrite sentences using the sentence edits protocol.
+ * Returns replacements for sentences that were modified.
+ * 
+ * @param sentences Array of sentence tokens to rewrite
+ * @param styleGuide The target style guide
+ * @param globalContext Optional document summary (truncated to ~200 chars)
+ * @param contextBefore Optional preceding text for flow reference
+ * @param contextAfter Optional following text for flow reference
+ * @returns ReplacementsResponse with array of index/text pairs
+ */
+export const rewriteSentencesInInferenceMode = async (params: {
+  sentences: SentenceToken[];
+  styleGuide: StyleGuide;
+  globalContext?: string;
+  contextBefore?: string;
+  contextAfter?: string;
+}): Promise<ReplacementsResponse> => {
+  const { systemInstruction, getPrompt } = sentenceRewritePrompt;
+  
+  // Convert SentenceToken[] to SentenceForRewrite[]
+  const sentencesForRewrite: SentenceForRewrite[] = params.sentences.map(s => ({
+    index: s.index,
+    text: s.text,
+  }));
+  
+  const prompt = getPrompt({
+    sentences: sentencesForRewrite,
+    styleGuide: params.styleGuide,
+    globalContext: params.globalContext,
+    contextBefore: params.contextBefore,
+    contextAfter: params.contextAfter,
+  });
+  
+  const payload = {
+    model: geminiConfig.modelName,
+    prompt,
+    response_mime_type: 'application/json',
+  };
+  
+  try {
+    // Use extended timeout for sentence rewrite
+    const result = await postJSON<ReplacementsResponse>('/api/process', payload, SENTENCE_REWRITE_TIMEOUT_MS);
+    
+    // Validate response structure
+    if (!result || !Array.isArray(result.replacements)) {
+      console.warn('[rewriteSentences] Invalid response structure, returning empty replacements');
+      return { replacements: [] };
+    }
+    
+    return result;
+  } catch (e) {
+    console.error('[rewriteSentences] Error:', e);
+    throw e;
+  }
+};

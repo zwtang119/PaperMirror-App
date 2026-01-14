@@ -172,3 +172,97 @@ Summarize the full document and each of its major sections identified by heading
 Your entire output must be a single, valid JSON object with the keys "documentSummary" and "sectionSummaries".
 `,
 };
+
+// --- PROMPT FOR SENTENCE-LEVEL REWRITING ---
+
+export interface SentenceForRewrite {
+  index: number;
+  text: string;
+}
+
+/**
+ * Generate prompt for sentence-level rewriting with replacements.
+ * This prompt instructs the model to output a JSON object with replacements array.
+ */
+export const sentenceRewritePrompt = {
+  systemInstruction: `You are a precision-focused academic writing assistant. Your task is to rewrite individual sentences to match a target academic style while preserving all factual content. You MUST output a single valid JSON object containing only the "replacements" array.`,
+  
+  getPrompt: (params: {
+    sentences: SentenceForRewrite[];
+    styleGuide: StyleGuide;
+    globalContext?: string;
+    contextBefore?: string;
+    contextAfter?: string;
+  }) => {
+    // Create a compact style summary for the prompt with safe property access
+    const stylePoints = [
+      `Average sentence length: ${params.styleGuide.averageSentenceLength ?? 'N/A'} words`,
+      `Tone: ${params.styleGuide.tone ?? 'Academic'}`,
+      `Common transitions: ${(params.styleGuide.commonTransitions ?? []).slice(0, 5).join(', ') || 'N/A'}`,
+      `Passive voice: ${params.styleGuide.passiveVoicePercentage ?? 'N/A'}%`,
+    ].join('\n');
+
+    // Truncate global context if too long (max ~200 chars)
+    const truncatedContext = params.globalContext 
+      ? (params.globalContext.length > 200 
+          ? params.globalContext.substring(0, 197) + '...'
+          : params.globalContext)
+      : '';
+
+    // Format sentences for the prompt using JSON.stringify for proper escaping
+    const sentenceList = params.sentences
+      .map(s => `  { "index": ${s.index}, "text": ${JSON.stringify(s.text)} }`)
+      .join(',\n');
+
+    const exampleOutput = {
+      replacements: [
+        { index: 0, text: "示例：这是改写后的第一个句子。" },
+        { index: 2, text: "示例：这是改写后的第三个句子。" }
+      ]
+    };
+
+    return `
+## STYLE GUIDE (Target Style)
+${stylePoints}
+
+${truncatedContext ? `## DOCUMENT CONTEXT\n${truncatedContext}\n` : ''}
+${params.contextBefore ? `## PRECEDING TEXT (for flow reference only)\n${params.contextBefore}\n` : ''}
+${params.contextAfter ? `## FOLLOWING TEXT (for flow reference only)\n${params.contextAfter}\n` : ''}
+
+## SENTENCES TO REWRITE
+The following sentences need to be rewritten to match the target style:
+
+[
+${sentenceList}
+]
+
+## TASK
+Rewrite each sentence to match the target academic style. Apply a "standard" level of rewriting:
+- Improve clarity and flow
+- Adjust sentence structure to match target style
+- Preserve the original meaning completely
+- Keep a ~30-50% change rate (not too conservative, not too aggressive)
+
+## STRICT CONSTRAINTS
+1. **Preserve all numbers, percentages, dates, and units exactly** (e.g., "35.7%", "2023年", "500万")
+2. **Preserve all citations, references, and acronyms exactly** (e.g., "[1]", "WHO", "GDP")
+3. **Preserve all proper nouns and technical terms** (e.g., person names, organization names)
+4. **Do NOT add or remove any factual information**
+5. **Each replacement text must be a single sentence** - do not include paragraph breaks (\\n\\n)
+6. **If a sentence needs no changes, omit it from replacements** (do not include it)
+
+## OUTPUT FORMAT
+Your entire output MUST be a single valid JSON object with this exact structure:
+
+\`\`\`json
+${escapeJsonString(exampleOutput)}
+\`\`\`
+
+Rules:
+- The "replacements" array contains objects with "index" (number) and "text" (string)
+- Only include sentences that were actually modified
+- If no changes are needed for any sentence, return: {"replacements": []}
+- Do NOT include any text before or after the JSON object
+`;
+  }
+};

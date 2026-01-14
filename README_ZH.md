@@ -82,6 +82,51 @@ export const ANALYSIS_MODE: AnalysisMode = 'full'; // 或 'none' 或 'fidelityOn
 
 ---
 
+## ⚙️ 改写模式配置
+
+PaperMirror 通过 `services/config.ts` 中的 `REWRITE_MODE` 设置支持两种改写模式：
+
+| 模式 | 说明 | 输出 |
+| :--- | :--- | :--- |
+| `sentenceEdits` **(默认)** | 逐句替换模式，自适应批处理 | 仅 `standard` |
+| `fullText` | 原有的全文分块改写模式 | `conservative`, `standard`, `enhanced` |
+
+### 为什么使用逐句替换模式？
+
+新的 `sentenceEdits` 模式专为处理较长的中文文档（3000-8000 字）设计：
+
+1. **避免超时**: 通过将句子分成小批次处理（默认每批 20 句），每次 API 请求控制在 Vercel 60 秒限制之内。
+2. **保留结构**: 段落分隔符（`\n\n`）被锁定为不可变的 token，永远不会发送给模型，确保文档结构完整保留。
+3. **优雅降级**: 如果某批次失败，系统会自动减小批次大小并重试。单个失败的句子会保留原文。
+4. **自适应批处理**: 批次大小根据响应时间动态调整——响应慢时降级，连续快速响应时升级。
+
+### 批处理常量
+
+以下常量可在 `services/config.ts` 中调整：
+
+```typescript
+export const batchingConfig = {
+  INITIAL_BATCH_SIZE: 20,      // 初始每批句子数
+  MAX_BATCH_SIZE: 25,          // 最大批次大小
+  SLOW_CALL_THRESHOLD_MS: 40000, // 请求超过 40s 时降级
+  TARGET_FAST_MS: 15000,       // 连续 3 次快速响应后升级
+  MAX_RETRY_PER_BATCH: 2,      // 最大重试次数
+  DEGRADATION_CHAIN: [20, 10, 5, 1], // 降级批次大小链
+  MAX_SENTENCE_CHARS: 400,     // 超过此长度的句子会被二级切分
+  FORCE_SPLIT_CHUNK_SIZE: 280, // 强制切分时的目标片段大小
+};
+```
+
+### 切回全文模式
+
+如需恢复原有的三档输出行为：
+
+```typescript
+export const REWRITE_MODE: RewriteMode = 'fullText';
+```
+
+---
+
 ## 🙋‍♀️ 常见问题 (FAQ)
 
 **Q: 我的未发表数据安全吗？**
