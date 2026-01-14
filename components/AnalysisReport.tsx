@@ -141,11 +141,16 @@ const AnalysisReport: React.FC<AnalysisReportProps> = ({ report }) => {
   const styleComparison = report.styleComparison;
   const fidelity = report.fidelityGuardrails;
   const citations = report.citationSuggestions;
+  
+  // Determine if this is a fidelity-only report (no style metrics or citations)
+  const isFidelityOnly = fidelity && !mirrorScore && !styleComparison && !citations;
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-bold text-slate-900 mb-2">Style Analysis Report</h2>
+        <h2 className="text-xl font-bold text-slate-900 mb-2">
+          {isFidelityOnly ? 'Fidelity Check' : 'Style Analysis Report'}
+        </h2>
         {report.status !== 'complete' && report.message && (
           <p className="text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded p-2">
             {report.message}
@@ -180,7 +185,9 @@ const AnalysisReport: React.FC<AnalysisReportProps> = ({ report }) => {
       {/* Fidelity Guardrails */}
       {fidelity && (
         <div>
-          <h3 className="text-lg font-semibold text-slate-800 mb-3">🛡️ Fidelity Guardrails</h3>
+          {!isFidelityOnly && (
+            <h3 className="text-lg font-semibold text-slate-800 mb-3">🛡️ Fidelity Guardrails</h3>
+          )}
           <FidelityDisplay 
             numberRate={fidelity.numberRetentionRate}
             acronymRate={fidelity.acronymRetentionRate}

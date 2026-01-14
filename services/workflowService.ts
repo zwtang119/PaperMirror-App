@@ -3,6 +3,7 @@ import {
   rewriteChunkInInferenceMode, 
   generateDocumentContext
 } from './geminiService';
+import { ANALYSIS_MODE } from './config';
 import type { MigrationResult, ProgressUpdate, StyleGuide, AnalysisReport } from '../types';
 import { 
   calculateMetrics, 
@@ -182,34 +183,56 @@ export const runInferenceWorkflow = async ({
     }
   }
 
-  // Generate real analysis report
-  onProgress({ stage: 'Generating analysis report...' });
+  // Generate analysis report based on ANALYSIS_MODE
+  let analysisReport: AnalysisReport | undefined;
   
-  const sampleMetrics = calculateMetrics(samplePaperContent);
-  const draftMetrics = calculateMetrics(draftPaperContent);
-  const standardMetrics = calculateMetrics(rewrittenStandard);
+  // Common status fields for reports
+  const reportStatus = failedChunks.length === 0 ? 'complete' : 'partial';
+  const reportMessage = failedChunks.length > 0 
+    ? `Processing completed with ${failedChunks.length} failed chunk(s): ${failedChunks.join(', ')}`
+    : undefined;
   
-  const mirrorScore = generateMirrorScore(sampleMetrics, draftMetrics, standardMetrics);
-  const fidelityGuardrails = calculateFidelityGuardrails(draftPaperContent, rewrittenStandard);
-  const citationSuggestions = generateCitationSuggestions(draftPaperContent);
-  
-  const analysisReport: AnalysisReport = {
-    status: failedChunks.length === 0 ? 'complete' : 'partial',
-    message: failedChunks.length > 0 
-      ? `Processing completed with ${failedChunks.length} failed chunk(s): ${failedChunks.join(', ')}`
-      : undefined,
-    mirrorScore,
-    styleComparison: {
-      sample: sampleMetrics,
-      draft: draftMetrics,
-      rewrittenStandard: standardMetrics,
-    },
-    fidelityGuardrails,
-    citationSuggestions,
-    // Legacy fields for backward compatibility
-    changeRatePerParagraph: [],
-    consistencyScore: mirrorScore.standardToSample / 100,
-  };
+  if (ANALYSIS_MODE === 'none') {
+    // No analysis report
+    analysisReport = undefined;
+  } else if (ANALYSIS_MODE === 'fidelityOnly') {
+    // Fidelity-only mode: zero tokens, local rules only
+    onProgress({ stage: 'Running fidelity check...' });
+    const fidelityGuardrails = calculateFidelityGuardrails(draftPaperContent, rewrittenStandard);
+    
+    analysisReport = {
+      status: reportStatus,
+      message: reportMessage,
+      fidelityGuardrails,
+    };
+  } else {
+    // Full mode: complete analysis with all metrics
+    onProgress({ stage: 'Generating analysis report...' });
+    
+    const sampleMetrics = calculateMetrics(samplePaperContent);
+    const draftMetrics = calculateMetrics(draftPaperContent);
+    const standardMetrics = calculateMetrics(rewrittenStandard);
+    
+    const mirrorScore = generateMirrorScore(sampleMetrics, draftMetrics, standardMetrics);
+    const fidelityGuardrails = calculateFidelityGuardrails(draftPaperContent, rewrittenStandard);
+    const citationSuggestions = generateCitationSuggestions(draftPaperContent);
+    
+    analysisReport = {
+      status: reportStatus,
+      message: reportMessage,
+      mirrorScore,
+      styleComparison: {
+        sample: sampleMetrics,
+        draft: draftMetrics,
+        rewrittenStandard: standardMetrics,
+      },
+      fidelityGuardrails,
+      citationSuggestions,
+      // Legacy fields for backward compatibility
+      changeRatePerParagraph: [],
+      consistencyScore: mirrorScore.standardToSample / 100,
+    };
+  }
   
 
   return { 
