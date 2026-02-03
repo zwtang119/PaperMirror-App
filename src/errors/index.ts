@@ -410,7 +410,7 @@ export function getUserFriendlyError(error: unknown): string {
 
 /**
  * 判断错误是否可以重试
- * 
+ *
  * @param error - 错误对象
  * @returns 是否可以重试
  */
@@ -419,6 +419,36 @@ export function isRetryableError(error: unknown): boolean {
     return error.retryable;
   }
   return false;
+}
+
+/**
+ * 获取配置诊断信息
+ * 用于帮助用户检查配置问题
+ */
+export function getConfigDiagnostics(): Record<string, { configured: boolean; value?: string; hint: string }> {
+  const diagnostics: Record<string, { configured: boolean; value?: string; hint: string }> = {};
+
+  // 检查 Cloud Function URL
+  const cfUrl = import.meta.env.VITE_CLOUD_FUNCTION_URL;
+  diagnostics.cloudFunctionUrl = {
+    configured: !!cfUrl && cfUrl !== 'http://localhost:8080',
+    value: cfUrl || '未配置',
+    hint: !cfUrl || cfUrl === 'http://localhost:8080'
+      ? '需要在 .env 文件中配置 VITE_CLOUD_FUNCTION_URL'
+      : '已配置'
+  };
+
+  // 检查 APP_TOKEN
+  const token = import.meta.env.VITE_APP_TOKEN;
+  diagnostics.appToken = {
+    configured: !!token && token !== 'your_secret_token_here' && token !== 'my-secret-password-123',
+    value: token ? '***已配置***' : '未配置',
+    hint: !token || token === 'your_secret_token_here' || token === 'my-secret-password-123'
+      ? '需要在 .env 文件中配置 VITE_APP_TOKEN'
+      : '已配置'
+  };
+
+  return diagnostics;
 }
 
 /**
