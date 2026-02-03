@@ -62,8 +62,8 @@ export const useMigrationWorkflow = () => {
 
   // 清理函数
   const revokeDownloadLinks = useCallback((links: DownloadLinks) => {
-    Object.values(links).forEach((url) => {
-      if (url && url.startsWith('blob:')) {
+    Object.values(links).forEach((url: unknown) => {
+      if (typeof url === 'string' && url.startsWith('blob:')) {
         URL.revokeObjectURL(url);
       }
     });

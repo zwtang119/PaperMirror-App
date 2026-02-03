@@ -21,14 +21,19 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "@papermirror/types": ["./src/types/index.ts"],
-      "@papermirror/prompts": ["./src/prompts/index.ts"]
+      "@papermirror/types": [
+        "./shared/types/src"
+      ],
+      "@papermirror/prompts": [
+        "./shared/prompts/src"
+      ]
     },
     "allowImportingTsExtensions": true,
     "noEmit": true
   },
   "include": [
     "src/**/*",
+    "shared/**/*",
     "src/types/**/*",
     "src/prompts/**/*",
     "components/**/*",

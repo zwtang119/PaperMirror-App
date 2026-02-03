@@ -1,0 +1,14 @@
+{
+  "name": "@papermirror/types",
+  "version": "1.0.0",
+  "description": "PaperMirror 共享类型定义",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0"
+  }
+}
