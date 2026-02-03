@@ -12,8 +12,21 @@
  * - 进度回调通知
  */
 
-import type { ProgressUpdate, MigrationResult, SSEEvent } from '@papermirror/types';
+import type { ProgressUpdate, MigrationResult, SSEEvent, AnalysisReport } from '@papermirror/types';
 import { getApiConfig } from '../src/config';
+
+/**
+ * Cloud Function 响应结果接口
+ * 定义后端返回的数据结构
+ */
+interface CloudFunctionResult {
+  rewritten: {
+    conservative: string;
+    standard: string;
+    enhanced: string;
+  };
+  analysisReport?: unknown;
+}
 import { 
   NetworkError, 
   ApiError, 
@@ -116,7 +129,7 @@ export async function processPaperWithCloudFunction(
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
-    let finalResult: any = null;
+    let finalResult: CloudFunctionResult | null = null;
     let eventCount = 0;
     let lastProgressTime = Date.now();
 
@@ -215,7 +228,7 @@ export async function processPaperWithCloudFunction(
         conservative: finalResult.rewritten.conservative,
         standard: finalResult.rewritten.standard,
         enhanced: finalResult.rewritten.enhanced,
-        analysisReport: finalResult.analysisReport || { status: 'complete' },
+        analysisReport: (finalResult.analysisReport as AnalysisReport | undefined) || { status: 'complete' as const },
     };
 }
 

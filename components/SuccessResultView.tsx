@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import type { MigrationResult, DownloadLinks } from '@papermirror/types';
 import AnalysisReport from './AnalysisReport';
 import DownloadIcon from './icons/DownloadIcon';
@@ -42,14 +42,24 @@ const DownloadButton: React.FC<{ href?: string; downloadName: string; children: 
 
 const CopyButton: React.FC<{ text: string }> = ({ text }) => {
   const [copied, setCopied] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleCopy = async () => {
+    setError(null);
+
+    // 检查 Clipboard API 是否可用
+    if (!navigator.clipboard || !navigator.clipboard.writeText) {
+      setError('剪贴板功能不可用');
+      return;
+    }
+
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error('Failed to copy!', err);
+      console.error('复制失败:', err);
+      setError('复制失败，请手动复制');
     }
   };
 
@@ -57,10 +67,10 @@ const CopyButton: React.FC<{ text: string }> = ({ text }) => {
     <button
       onClick={handleCopy}
       className="flex items-center space-x-1.5 text-xs font-medium text-slate-500 hover:text-blue-600 transition-colors bg-slate-100 hover:bg-blue-50 px-2.5 py-1.5 rounded-md"
-      title="复制内容"
+      title={error || '复制内容'}
     >
       {copied ? <CheckIcon /> : <CopyIcon />}
-      <span>{copied ? '已复制' : '复制'}</span>
+      <span>{error || (copied ? '已复制' : '复制')}</span>
     </button>
   );
 };
@@ -73,22 +83,22 @@ const SuccessResultView: React.FC<SuccessResultViewProps> = ({ result, downloadL
       : null;
 
   const textContent = contentKey ? result[contentKey] : null;
-  const [htmlContent, setHtmlContent] = useState('');
 
-  useEffect(() => {
-      if (textContent) {
-          try {
-            const dirtyHtml = marked.parse(textContent);
-            const htmlString = typeof dirtyHtml === 'string' ? dirtyHtml : ''; 
-            setHtmlContent(DOMPurify.sanitize(htmlString));
-          } catch (e) {
-            console.error("Markdown parsing or sanitization failed:", e);
-            const escapedText = textContent.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-            setHtmlContent(`<pre style="white-space: pre-wrap; word-wrap: break-word;">${escapedText}</pre>`);
-          }
-      } else {
-          setHtmlContent('');
-      }
+  // 使用 useMemo 缓存 Markdown 解析和 HTML 净化结果
+  const htmlContent = useMemo(() => {
+    if (!textContent) {
+      return '';
+    }
+
+    try {
+      const dirtyHtml = marked.parse(textContent);
+      const htmlString = typeof dirtyHtml === 'string' ? dirtyHtml : '';
+      return DOMPurify.sanitize(htmlString);
+    } catch (e) {
+      console.error("Markdown parsing or sanitization failed:", e);
+      const escapedText = textContent.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      return `<pre style="white-space: pre-wrap; word-wrap: break-word;">${escapedText}</pre>`;
+    }
   }, [textContent]);
   
   const tabs: { id: Tab; label: string; desc: string; color: string }[] = [

@@ -38,29 +38,28 @@ initGlobalErrorHandlers();
 const rootElement = document.getElementById('root');
 
 if (!rootElement) {
-  // 根元素不存在时的致命错误
+  // 根元素不存在时的致命错误 - 使用安全的 DOM 创建方法
   console.error('[Fatal Error] 找不到根元素 #root，无法挂载应用');
-  document.body.innerHTML = `
-    <div style="
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      font-family: system-ui, sans-serif;
-      background: #f8fafc;
-    ">
-      <div style="
-        text-align: center;
-        padding: 2rem;
-        background: white;
-        border-radius: 8px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-      ">
-        <h1 style="color: #dc2626; margin-bottom: 1rem;">应用初始化失败</h1>
-        <p style="color: #64748b;">无法找到应用挂载点，请检查 HTML 文件。</p>
-      </div>
-    </div>
-  `;
+
+  const errorContainer = document.createElement('div');
+  errorContainer.style.cssText = 'display: flex; align-items: center; justify-content: center; min-height: 100vh; font-family: system-ui, sans-serif; background: #f8fafc;';
+
+  const errorBox = document.createElement('div');
+  errorBox.style.cssText = 'text-align: center; padding: 2rem; background: white; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);';
+
+  const errorTitle = document.createElement('h1');
+  errorTitle.style.cssText = 'color: #dc2626; margin-bottom: 1rem;';
+  errorTitle.textContent = '应用初始化失败';
+
+  const errorMessage = document.createElement('p');
+  errorMessage.style.cssText = 'color: #64748b;';
+  errorMessage.textContent = '无法找到应用挂载点，请检查 HTML 文件。';
+
+  errorBox.appendChild(errorTitle);
+  errorBox.appendChild(errorMessage);
+  errorContainer.appendChild(errorBox);
+  document.body.appendChild(errorContainer);
+
   throw new Error('找不到根元素 #root，无法挂载应用');
 }
 
