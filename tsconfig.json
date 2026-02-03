@@ -25,10 +25,10 @@
         "./*"
       ],
       "@papermirror/types": [
-        "node_modules/@papermirror/types/dist/index.d.ts"
+        "./src/types/index.ts"
       ],
       "@papermirror/prompts": [
-        "node_modules/@papermirror/prompts/dist/index.d.ts"
+        "./src/prompts/index.ts"
       ]
     },
     "allowImportingTsExtensions": true,
