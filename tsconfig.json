@@ -1,4 +1,5 @@
 {
+  "extends": "../types/tsconfig.json",
   "compilerOptions": {
     "target": "ES2022",
     "experimentalDecorators": true,
@@ -22,9 +23,15 @@
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "@papermirror/types": [
+        "../types/src/index.ts"
       ]
     },
     "allowImportingTsExtensions": true,
     "noEmit": true
-  }
+  },
+  "references": [
+    { "path": "../types" }
+  ]
 }

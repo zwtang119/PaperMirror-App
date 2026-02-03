@@ -1,33 +1,47 @@
 import React from 'react';
-import type { MigrationResult, AppStatus, ProgressUpdate } from '../types';
+import type { MigrationResult, ProgressUpdate, DownloadLinks } from '@papermirror/types';
 import InitialStateView from './InitialStateView';
 import LoadingStateView from './LoadingStateView';
 import ErrorStateView from './ErrorStateView';
 import SuccessResultView from './SuccessResultView';
 
 interface ResultDisplayProps {
-  status: AppStatus;
+  isIdle: boolean;
+  isLoading: boolean;
+  isSuccess: boolean;
+  isError: boolean;
   result: MigrationResult | null;
-  downloadLinks?: { [key: string]: string };
+  downloadLinks: DownloadLinks;
   progress: ProgressUpdate | null;
 }
 
-const ResultDisplay: React.FC<ResultDisplayProps> = ({ status, result, downloadLinks, progress }) => {
+const ResultDisplay: React.FC<ResultDisplayProps> = ({
+  isIdle,
+  isLoading,
+  isSuccess,
+  isError,
+  result,
+  downloadLinks,
+  progress,
+}) => {
   const renderContent = () => {
-    switch (status) {
-      case 'loading':
-        return <LoadingStateView progress={progress} />;
-      case 'success':
-        if (result) {
-          return <SuccessResultView result={result} downloadLinks={downloadLinks} />;
-        }
-        // Fallthrough to error if result is null on success
-      case 'error':
-        return <ErrorStateView />;
-      case 'idle':
-      default:
-        return <InitialStateView />;
+    if (isLoading) {
+      return <LoadingStateView progress={progress} />;
     }
+
+    if (isSuccess && result) {
+      return <SuccessResultView result={result} downloadLinks={downloadLinks} />;
+    }
+
+    if (isError) {
+      return <ErrorStateView />;
+    }
+
+    if (isIdle) {
+      return <InitialStateView />;
+    }
+
+    return <InitialStateView />;
   };
 
   return (
