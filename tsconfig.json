@@ -34,5 +34,15 @@
     "allowImportingTsExtensions": true,
     "noEmit": true
   },
-  "include": ["src/**/*", "components/**/*", "hooks/**/*", "services/**/*", "utils/**/*", "*.ts", "*.tsx"]
+  "include": [
+    "src/**/*",
+    "src/types/**/*",
+    "src/prompts/**/*",
+    "components/**/*",
+    "hooks/**/*",
+    "services/**/*",
+    "utils/**/*",
+    "*.ts",
+    "*.tsx"
+  ]
 }
