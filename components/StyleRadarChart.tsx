@@ -84,7 +84,7 @@ const StyleRadarChart: React.FC<StyleRadarChartProps> = ({ sample, draft, rewrit
 
   return (
     <div className="w-full h-[300px] sm:h-[400px]">
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height={300} minHeight={200}>
         <RadarChart cx="50%" cy="50%" outerRadius="80%" data={data}>
           <PolarGrid />
           <PolarAngleAxis dataKey="subject" tick={{ fill: '#475569', fontSize: 12 }} />
