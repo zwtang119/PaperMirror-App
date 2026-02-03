@@ -2,7 +2,80 @@
 
 ## 常见错误及解决方案
 
-### 1. "发生未知错误" 或 "应用出现错误"
+### 1. CORS（跨域）错误
+
+**症状**：
+- 浏览器控制台显示："has been blocked by CORS policy"
+- 错误消息包含"Request header field X-Request-ID is not allowed"
+- 网络请求失败，状态码为 `net::ERR_FAILED`
+
+**错误示例**：
+```
+Access to fetch at 'https://your-backend-url.com' from origin 'https://zwtang119.github.io'
+has been blocked by CORS policy: Request header field x-request-id is not allowed
+```
+
+**根本原因**：
+- 后端 Cloud Functions 未正确配置 CORS 头
+- 缺少必要的 CORS 允许请求头
+
+**解决方案**：
+
+#### 方法 1：更新 Cloud Functions 代码（推荐）
+
+确保 `functions/src/index.ts` 中的 CORS 配置包含所有必要的请求头：
+
+```typescript
+ff.http('paperMirrorEntry', async (req: ff.Request, res: ff.Response) => {
+  // CORS 设置
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-My-Token, X-Request-ID');
+
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
+  // ... 其余代码
+});
+```
+
+**重要**：必须包含 `X-Request-ID` 和 `X-My-Token` 请求头。
+
+#### 方法 2：重新部署 Cloud Functions
+
+1. 构建更新的函数：
+   ```bash
+   cd functions
+   npm run build
+   ```
+
+2. 部署到 Cloud Run：
+   ```bash
+   gcloud run deploy papermirror-backend \
+     --source . \
+     --region asia-northeast1 \
+     --allow-unauthenticated \
+     --set-env-vars GEMINI_API_KEY=your_key,APP_TOKEN=your_token
+   ```
+
+#### 方法 3：验证 CORS 配置
+
+部署后，使用 curl 测试 CORS：
+
+```bash
+curl -X OPTIONS https://your-backend-url.com \
+  -H "Access-Control-Request-Method: POST" \
+  -H "Access-Control-Request-Headers: X-Request-ID, X-My-Token" \
+  -H "Origin: https://zwtang119.github.io" \
+  -v
+```
+
+检查响应头是否包含：
+- `Access-Control-Allow-Origin: *`
+- `Access-Control-Allow-Headers: Content-Type, Authorization, X-My-Token, X-Request-ID`
+
+### 2. "发生未知错误" 或 "应用出现错误"
 
 如果错误消息显示"发生未知错误"，请点击"显示详细信息"按钮查看具体错误信息。
 
