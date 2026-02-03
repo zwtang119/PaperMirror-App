@@ -81,7 +81,7 @@ export async function processPaperWithCloudFunction(
     // 构建请求头
     const headers: Record<string, string> = {
         'Content-Type': 'application/json',
-        // 'X-Request-ID': requestId, // 临时移除：后端 CORS 配置需要更新
+        'X-Request-ID': requestId, // 用于后端日志关联和防止滥用
     };
     if (config.token) {
         headers['X-My-Token'] = config.token;
