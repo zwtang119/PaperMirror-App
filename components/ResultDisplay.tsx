@@ -1,5 +1,5 @@
 import React from 'react';
-import type { MigrationResult, ProgressUpdate, DownloadLinks } from '@papermirror/types';
+import type { MigrationResult, ProgressUpdate, DownloadLinks, ErrorDetails } from '@papermirror/types';
 import InitialStateView from './InitialStateView';
 import LoadingStateView from './LoadingStateView';
 import ErrorStateView from './ErrorStateView';
@@ -10,6 +10,7 @@ interface ResultDisplayProps {
   isLoading: boolean;
   isSuccess: boolean;
   isError: boolean;
+  error: ErrorDetails | null;
   result: MigrationResult | null;
   downloadLinks: DownloadLinks;
   progress: ProgressUpdate | null;
@@ -20,6 +21,7 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
   isLoading,
   isSuccess,
   isError,
+  error,
   result,
   downloadLinks,
   progress,
@@ -34,7 +36,7 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
     }
 
     if (isError) {
-      return <ErrorStateView />;
+      return <ErrorStateView error={error} />;
     }
 
     if (isIdle) {

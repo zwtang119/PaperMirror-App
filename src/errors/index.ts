@@ -7,8 +7,8 @@
  * 包括网络错误、API 错误、验证错误等。每种错误都有对应的错误码和用户友好的消息。
  */
 
-import { ErrorCodes, type ErrorCode } from '@papermirror/types';
-export { ErrorCodes, type ErrorCode };
+import { ErrorCodes, type ErrorCode, type ErrorDetails } from '@papermirror/types';
+export { ErrorCodes, type ErrorCode, type ErrorDetails };
 
 // ==================== 错误上下文接口 ====================
 
@@ -390,6 +390,13 @@ const userFriendlyMessages: Record<ErrorCode, string> = {
  * ```
  */
 export function getUserFriendlyError(error: unknown): string {
+  // 处理 ErrorDetails (来自序列化的 AppError)
+  if (error && typeof error === 'object' && 'code' in error && 'message' in error) {
+    const errorDetails = error as ErrorDetails;
+    const errorCode = errorDetails.code as ErrorCode;
+    return userFriendlyMessages[errorCode] || errorDetails.message || '发生未知错误，请稍后重试';
+  }
+
   if (error instanceof AppError) {
     return userFriendlyMessages[error.code] || error.message || '发生未知错误，请稍后重试';
   }

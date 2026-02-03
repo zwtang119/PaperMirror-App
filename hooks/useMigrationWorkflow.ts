@@ -62,7 +62,7 @@ export const useMigrationWorkflow = () => {
 
   // 清理函数
   const revokeDownloadLinks = useCallback((links: DownloadLinks) => {
-    Object.values(links).forEach((url: unknown) => {
+    Object.values(links).forEach((url) => {
       if (typeof url === 'string' && url.startsWith('blob:')) {
         URL.revokeObjectURL(url);
       }
@@ -209,7 +209,7 @@ export const useMigrationWorkflow = () => {
   const progress = state.type === 'loading' ? state.progress : null;
   const result = state.type === 'success' ? state.result : null;
   const downloadLinks = state.type === 'success' ? state.downloadLinks : {};
-  const error = state.type === 'error' ? getUserFriendlyError(normalizeError(state.error)) : null;
+  const error = state.type === 'error' ? normalizeError(state.error).toJSON() : null;
 
   return {
     // 状态

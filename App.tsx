@@ -124,7 +124,7 @@ const App: React.FC = () => {
 
               {isError && error && (
                 <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
-                  <p className="text-red-700 text-sm">{error}</p>
+                  <p className="text-red-700 text-sm">{error.message || '发生错误'}</p>
                 </div>
               )}
             </div>
@@ -137,10 +137,11 @@ const App: React.FC = () => {
               isSuccess={isSuccess}
               isError={isError}
               result={result}
-              downloadLinks={downloadLinks}
-              progress={progress}
-            />
-          </section>
+                downloadLinks={downloadLinks}
+                progress={progress}
+                error={error}
+              />
+            </section>
         </div>
       </main>
 

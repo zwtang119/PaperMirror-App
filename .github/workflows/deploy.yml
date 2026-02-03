@@ -27,13 +27,20 @@ jobs:
           node-version: '20'
           # cache: 'npm'  <-- REMOVED to fix build error when package-lock.json is missing
 
+      - name: Build shared packages
+        run: |
+          cd ../types && npm ci && npm run build
+          cd ../prompts && npm ci && npm run build
+
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Build
         run: npm run build
         env:
-          VITE_GLM_API_KEY: ${{ secrets.API_KEY }}
+          VITE_CLOUD_FUNCTION_URL: ${{ secrets.VITE_CLOUD_FUNCTION_URL }}
+          VITE_APP_TOKEN: ${{ secrets.VITE_APP_TOKEN }}
+          VITE_ANALYSIS_MODE: 'full'
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
