@@ -16,6 +16,7 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, '.'),
       '@papermirror/types': path.resolve(__dirname, '../types/src/index.ts'),
+      '@papermirror/prompts': path.resolve(__dirname, '../prompts/src/index.ts'),
     },
   },
 });
