@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import type { MigrationResult } from '../types';
+import type { MigrationResult, DownloadLinks } from '@papermirror/types';
 import AnalysisReport from './AnalysisReport';
 import DownloadIcon from './icons/DownloadIcon';
 import { marked } from 'marked';
@@ -9,7 +9,7 @@ type Tab = 'conservative' | 'standard' | 'enhanced' | 'report';
 
 interface SuccessResultViewProps {
   result: MigrationResult;
-  downloadLinks?: { [key: string]: string };
+  downloadLinks?: DownloadLinks;
 }
 
 const CopyIcon = () => (

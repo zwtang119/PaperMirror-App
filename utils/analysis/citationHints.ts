@@ -3,7 +3,7 @@
  * 不生成实际的引用 - 仅提供搜索关键词。
  */
 
-import type { CitationSuggestion } from '../../types';
+import type { CitationSuggestion } from '@papermirror/types';
 import { splitSentencesCN } from './text';
 
 // 规则版本，用于追踪

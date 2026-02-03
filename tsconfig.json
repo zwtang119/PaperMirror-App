@@ -1,5 +1,4 @@
 {
-  "extends": "../types/tsconfig.json",
   "compilerOptions": {
     "target": "ES2022",
     "experimentalDecorators": true,
@@ -26,12 +25,17 @@
       ],
       "@papermirror/types": [
         "../types/src/index.ts"
+      ],
+      "@papermirror/prompts": [
+        "../prompts/src/index.ts"
       ]
     },
     "allowImportingTsExtensions": true,
     "noEmit": true
   },
   "references": [
-    { "path": "../types" }
-  ]
+    { "path": "../types" },
+    { "path": "../prompts" }
+  ],
+  "include": ["src/**/*", "components/**/*", "hooks/**/*", "services/**/*", "utils/**/*", "*.ts", "*.tsx"]
 }

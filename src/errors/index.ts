@@ -7,51 +7,8 @@
  * 包括网络错误、API 错误、验证错误等。每种错误都有对应的错误码和用户友好的消息。
  */
 
-// ==================== 错误码定义 ====================
-
-/**
- * 错误码枚举
- * 用于唯一标识不同类型的错误，便于错误追踪和处理
- */
-export const ErrorCodes = {
-  // 网络错误 (1000-1099)
-  CONNECTION_FAILED: 'CONNECTION_FAILED',
-  URL_NOT_CONFIGURED: 'URL_NOT_CONFIGURED',
-  TIMEOUT: 'TIMEOUT',
-  NETWORK_ABORTED: 'NETWORK_ABORTED',
-
-  // API 错误 (1100-1199)
-  SERVER_ERROR: 'SERVER_ERROR',
-  EMPTY_RESPONSE: 'EMPTY_RESPONSE',
-  INCOMPLETE_RESPONSE: 'INCOMPLETE_RESPONSE',
-  UNAUTHORIZED: 'UNAUTHORIZED',
-  FORBIDDEN: 'FORBIDDEN',
-  NOT_FOUND: 'NOT_FOUND',
-  RATE_LIMITED: 'RATE_LIMITED',
-  SERVICE_UNAVAILABLE: 'SERVICE_UNAVAILABLE',
-
-  // 验证错误 (1200-1299)
-  VALIDATION_FAILED: 'VALIDATION_FAILED',
-  INVALID_INPUT: 'INVALID_INPUT',
-  MISSING_REQUIRED_FIELD: 'MISSING_REQUIRED_FIELD',
-
-  // 文件错误 (1300-1399)
-  FILE_READ_ERROR: 'FILE_READ_ERROR',
-  FILE_TOO_LARGE: 'FILE_TOO_LARGE',
-  INVALID_FILE_TYPE: 'INVALID_FILE_TYPE',
-  FILE_EMPTY: 'FILE_EMPTY',
-
-  // 工作流错误 (1400-1499)
-  WORKFLOW_FAILED: 'WORKFLOW_FAILED',
-  PROCESSING_ERROR: 'PROCESSING_ERROR',
-  WORKFLOW_CANCELLED: 'WORKFLOW_CANCELLED',
-
-  // 配置错误 (1500-1599)
-  CONFIG_MISSING: 'CONFIG_MISSING',
-  CONFIG_INVALID: 'CONFIG_INVALID',
-} as const;
-
-export type ErrorCode = typeof ErrorCodes[keyof typeof ErrorCodes];
+import { ErrorCodes, type ErrorCode } from '@papermirror/types';
+export { ErrorCodes, type ErrorCode };
 
 // ==================== 错误上下文接口 ====================
 
