@@ -1,5 +1,5 @@
 /**
- * Text preprocessing and sentence splitting utilities for Chinese academic texts.
+ * 文本预处理和句子拆分工具，用于中文学术文本。
  */
 
 export interface Sentence {
@@ -8,30 +8,30 @@ export interface Sentence {
 }
 
 /**
- * Normalize text by unifying line breaks, trimming, and removing excess whitespace.
- * Preserves Markdown headings but cleans up spacing.
+ * 规范化文本：统一换行符、修剪和移除多余空白。
+ * 保留 Markdown 标题，但清理间距。
  */
 export function normalizeText(text: string): string {
   return text
-    .replace(/\r\n/g, '\n')  // Unify line breaks
+    .replace(/\r\n/g, '\n')  // 统一换行符
     .replace(/\r/g, '\n')
-    .replace(/\n{3,}/g, '\n\n')  // Max 2 consecutive newlines
-    .replace(/[ \t]+/g, ' ')  // Collapse horizontal whitespace
+    .replace(/\n{3,}/g, '\n\n')  // 最多允许连续两个换行符
+    .replace(/[ \t]+/g, ' ')  // 压缩水平空白
     .trim();
 }
 
 /**
- * Split Chinese text into sentences.
- * Rules:
- * - Split on 。？！(Chinese sentence-ending punctuation)
- * - Semicolons (；) are kept within sentences, not used as boundaries
- * - Markdown headings (lines starting with #) are filtered out from stats
- * - Preserves trailing punctuation for accurate reconstruction
+ * 将中文文本拆分为句子。
+ * 规则：
+ * - 在 。？！（中文句子结束标点）处拆分
+ * - 分号（；）保留在句子内，不作为边界
+ * - Markdown 标题（以 # 开头的行）会被过滤掉
+ * - 保留末尾标点以便精确重构
  */
 export function splitSentencesCN(text: string): Sentence[] {
   const normalized = normalizeText(text);
   
-  // Split on Chinese sentence-ending punctuation, keeping the delimiter
+  // 在中文句子结束标点处拆分，保留分隔符
   const parts = normalized.split(/(?<=[。？！])/);
   
   const sentences: Sentence[] = [];
@@ -40,13 +40,13 @@ export function splitSentencesCN(text: string): Sentence[] {
   for (const part of parts) {
     const trimmed = part.trim();
     
-    // Skip empty parts
+    // 跳过空部分
     if (!trimmed) continue;
     
-    // Skip Markdown headings (lines starting with #)
+    // 跳过 Markdown 标题（以 # 开头的行）
     if (/^#+\s/.test(trimmed)) continue;
     
-    // Skip very short fragments (likely artifacts)
+    // 跳过非常短的片段（可能是伪影）
     if (trimmed.length < 2) continue;
     
     sentences.push({
@@ -59,14 +59,14 @@ export function splitSentencesCN(text: string): Sentence[] {
 }
 
 /**
- * Check if a line is a Markdown heading.
+ * 检查一行是否为 Markdown 标题。
  */
 export function isMarkdownHeading(line: string): boolean {
   return /^#+\s/.test(line.trim());
 }
 
 /**
- * Get text content without Markdown headings for statistical analysis.
+ * 获取用于统计分析的正文文本（去除 Markdown 标题）。
  */
 export function getBodyText(text: string): string {
   const lines = normalizeText(text).split('\n');

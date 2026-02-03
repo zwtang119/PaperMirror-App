@@ -31,7 +31,7 @@ export const saveFileToStorage = async (key: string, file: File): Promise<void> 
     };
     localStorage.setItem(key, JSON.stringify(storedFile));
   } catch (error) {
-    console.error(`Failed to save file '${key}' to storage:`, error);
+    console.error(`保存文件 '${key}' 到存储失败:`, error);
   }
 };
 
@@ -47,8 +47,8 @@ export const loadFileFromStorage = async (key: string): Promise<File | null> => 
       lastModified: storedFile.lastModified,
     });
   } catch (error) {
-    console.error(`Failed to load file '${key}' from storage:`, error);
-    // If loading fails, clear the corrupted item
+    console.error(`从存储加载文件 '${key}' 失败:`, error);
+    // 如果加载失败，清除损坏的项
     localStorage.removeItem(key);
     return null;
   }

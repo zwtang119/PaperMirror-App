@@ -1,73 +1,32 @@
 /**
- * Analysis mode controls what is included in the analysis report.
- * - 'none': No analysis report generated, only text output
- * - 'fidelityOnly': Only fidelity guardrails (zero tokens, local rules)
- * - 'full': Full report including mirror score, style comparison, and citation suggestions
+ * 分析模式控制分析报告中包含的内容。
+ * - 'none': 不生成分析报告，仅文本输出
+ * - 'fidelityOnly': 仅保真度护栏（零 token，本地规则）
+ * - 'full': 完整报告，包括镜像分数、风格对比和引用建议
  */
 export type AnalysisMode = 'none' | 'fidelityOnly' | 'full';
 
 /**
- * Default analysis mode: fidelity-only for faster, zero-token analysis.
- * Change to 'full' to enable complete report with style metrics.
+ * 默认分析模式：仅保真度，用于更快、零 token 的分析。
+ * 更改为 'full' 以启用包含风格指标的完整报告。
  */
 export const ANALYSIS_MODE: AnalysisMode = 'fidelityOnly';
 
-/**
- * Rewrite mode controls how chunk content is rewritten.
- * - 'fullText': Original mode - sends full chunk text to model, returns conservative/standard/enhanced
- * - 'sentenceEdits': New mode - sends sentences in batches, model returns replacements for each
- * 
- * 'sentenceEdits' mode is more reliable for long documents (3000-8000 chars) as it:
- * - Avoids Vercel 60s timeout by processing smaller batches
- * - Preserves paragraph structure using locked separator tokens
- * - Allows graceful degradation on failures (keeps original sentences)
- */
-export type RewriteMode = 'fullText' | 'sentenceEdits';
-
-/**
- * Default rewrite mode: sentenceEdits for better reliability with long documents.
- * Change to 'fullText' to revert to original behavior.
- */
-export const REWRITE_MODE: RewriteMode = 'sentenceEdits';
-
-/**
- * Batching constants for sentence edits mode.
- * These control how sentences are grouped and processed to avoid Vercel 60s timeout.
- */
-export const batchingConfig = {
-  /** Initial number of sentences per batch */
-  INITIAL_BATCH_SIZE: 20,
-  /** Maximum batch size (won't exceed this even with fast responses) */
-  MAX_BATCH_SIZE: 25,
-  /** If a request takes longer than this (ms), reduce batch size */
-  SLOW_CALL_THRESHOLD_MS: 40000,
-  /** If 3 consecutive requests are faster than this (ms), increase batch size */
-  TARGET_FAST_MS: 15000,
-  /** Maximum retries per batch before falling back to smaller batch */
-  MAX_RETRY_PER_BATCH: 2,
-  /** Degradation chain: when a batch fails, try these sizes in order */
-  DEGRADATION_CHAIN: [20, 10, 5, 1] as const,
-  /** Maximum characters per sentence before secondary splitting */
-  MAX_SENTENCE_CHARS: 400,
-  /** Target chunk size for force-splitting very long sentences */
-  FORCE_SPLIT_CHUNK_SIZE: 280,
-};
-
 export const geminiConfig = {
   /**
-   * The name of the Gemini model to be used for all API calls.
-   * Using 'gemini-3-pro-preview' for complex text tasks and high quality reasoning.
+   * 用于所有 API 调用的 Gemini 模型名称。
+   * 使用 'gemini-3-flash-preview' 以获得最大速度和智能。
    */
-  modelName: 'gemini-2.5-flash',
+  modelName: 'gemini-3-flash-preview',
 
   /**
-   * The temperature setting for the model.
+   * 模型的温度设置。
    */
   temperature: 0.2,
 
   /**
-   * The thinking budget allocated to the model.
-   * Setting a balanced budget for quality style transfer logic.
+   * 分配给模型的思考预算。
+   * 为高质量的风格迁移逻辑设置平衡的预算。
    */
   thinkingBudget: 0,
 };

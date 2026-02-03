@@ -1,13 +1,11 @@
-import type { AnalysisReport, StyleGuide, DocumentContext, ReplacementsResponse, SentenceToken } from '../types';
-import { inferencePrompts, documentContextPrompt, sentenceRewritePrompt, SentenceForRewrite } from './prompts';
+import type { AnalysisReport, StyleGuide, DocumentContext } from '../types';
+import { inferencePrompts, documentContextPrompt } from './prompts';
 import { geminiConfig } from './config';
 
 const BASE_URL = import.meta.env.VITE_PROXY_BASE_URL || '';
 
-// Timeout for regular requests (60s)
-const DEFAULT_TIMEOUT_MS = 60000;
-// Extended timeout for sentence rewrite requests (75s to give buffer before Vercel 60s limit)
-const SENTENCE_REWRITE_TIMEOUT_MS = 75000;
+// 请求超时时间 (5分钟) - 适应 One-Shot 长文档生成
+const DEFAULT_TIMEOUT_MS = 300000;
 
 async function postJSON<T>(path: string, payload: any, timeoutMs: number = DEFAULT_TIMEOUT_MS): Promise<T> {
   const url = `${BASE_URL}${path}`;
@@ -16,9 +14,15 @@ async function postJSON<T>(path: string, payload: any, timeoutMs: number = DEFAU
   let rawText = ''; // 保留原文，方便调试
 
   try {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    const token = import.meta.env.VITE_PROXY_ACCESS_TOKEN;
+    if (token) {
+      headers['X-My-Token'] = token;
+    }
+
     const res = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify(payload),
       signal: controller.signal
     });
@@ -30,15 +34,26 @@ async function postJSON<T>(path: string, payload: any, timeoutMs: number = DEFAU
 
     const data = await res.json();
 
-    // 适配代理格式
-    if (data.success === false) {
-      throw new Error(data.error || 'API processing failed');
+    // 适配 Google API 格式
+    if (data.error) {
+      throw new Error(data.error.message || 'API processing failed');
     }
 
-    // 取出嵌套 result 字段
-    rawText = data.result || '';
+    // 取出嵌套 result 字段 (兼容旧代理或直接 Google API)
+    if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
+      rawText = data.candidates[0].content.parts[0].text;
+    } else if (data.result) {
+      rawText = data.result; // 兼容旧代理
+    } else {
+      rawText = ''; // Fallback
+    }
+
     if (!rawText) {
-      throw new Error('Empty "result" field from API');
+      // 某些情况下 filter 会导致无内容
+      if (data.promptFeedback?.blockReason) {
+        throw new Error(`Blocked: ${data.promptFeedback.blockReason}`);
+      }
+      throw new Error('Empty result from API');
     }
 
     // ==== 三重 JSON 清理 ====
@@ -82,11 +97,44 @@ async function postJSON<T>(path: string, payload: any, timeoutMs: number = DEFAU
   }
 }
 
+/**
+ * 针对瞬时错误（如 503, 429, 网络问题）的重试逻辑。
+ * 使用指数退避策略。
+ */
+async function postJSONWithRetry<T>(path: string, payload: any, maxRetries: number = 3): Promise<T> {
+  let attempt = 0;
+  let lastError: any;
 
+  while (attempt < maxRetries) {
+    try {
+      return await postJSON<T>(path, payload);
+    } catch (error: any) {
+      lastError = error;
+      const isRetryable =
+        error.message.includes('503') ||
+        error.message.includes('429') ||
+        error.message.includes('network') ||
+        error.message.includes('fetch failed');
 
+      if (!isRetryable) {
+        throw error; // 致命错误，不重试
+      }
 
+      attempt++;
+      console.warn(`[postJSONWithRetry] 尝试 ${attempt} 失败, 正在重试...`, error);
 
-// --- EXPORTS ---
+      if (attempt < maxRetries) {
+        // 指数退避: 1s, 2s, 4s...
+        const delay = Math.pow(2, attempt - 1) * 1000;
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+
+  throw lastError;
+}
+
+// --- 导出 ---
 
 export const generateDocumentContext = async (fullDocumentContent: string): Promise<DocumentContext> => {
   const { systemInstruction, getPrompt } = documentContextPrompt;
@@ -100,13 +148,24 @@ export const extractStyleGuide = async (samplePaperContent: string): Promise<Sty
 
 export const rewriteChunkInInferenceMode = async (params: {
   mainContent: string;
-  contextBefore: string;
-  contextAfter: string;
+  fullDocumentContent: string;
   styleGuide: StyleGuide;
   documentContext: DocumentContext;
   currentSectionTitle?: string;
 }): Promise<{ conservative: string; standard: string; enhanced: string; }> => {
   const { systemInstruction, getPrompt } = inferencePrompts.rewriteChunk;
+  return generateStructured<{ conservative: string; standard: string; enhanced: string; }>(
+    getPrompt(params),
+    systemInstruction
+  );
+};
+
+export const rewriteFullDocument = async (params: {
+  fullDocumentContent: string;
+  styleGuide: StyleGuide;
+  documentContext: DocumentContext;
+}): Promise<{ conservative: string; standard: string; enhanced: string; }> => {
+  const { systemInstruction, getPrompt } = inferencePrompts.rewriteFullDocument;
   return generateStructured<{ conservative: string; standard: string; enhanced: string; }>(
     getPrompt(params),
     systemInstruction
@@ -123,103 +182,33 @@ export const generateFinalReport = async (params: {
 }
 
 // ---------- 结构化 JSON 工具 ----------
-/** 手写核心 Schema，避免再引库 */
-function toJSONSchema<T>(): object {
-  return {
-    type: 'object',
-    properties: {
-      documentSummary: { type: 'string' },
-      sectionSummaries: {
-        type: 'array',
-        items: {
-          type: 'object',
-          properties: {
-            sectionTitle: { type: 'string' },
-            summary: { type: 'string' }
-          },
-          required: ['sectionTitle', 'summary']
-        }
-      }
-    },
-    required: ['documentSummary', 'sectionSummaries']
-  };
-}
 
 /**
  * 统一结构化生成入口
- * 先走 Gemini 原生 JSON Schema，失败退回到三重清理兜底
+ * 适配 Google Cloud Run 透明代理 (REST API 格式)
  */
 async function generateStructured<T>(prompt: string, systemInstruction: string): Promise<T> {
   const payload = {
-    model: geminiConfig.modelName,
-    prompt,
-    response_mime_type: 'application/json',
-    response_schema: toJSONSchema<T>()
-  };
-  try {
-    return await postJSON<T>('/api/process', payload);
-  } catch (e) {
-    console.warn('[Structured] 原生模式失败，退回到三重清理兜底', e);
-    // 代理未升级时，去掉 schema 再走老逻辑
-    return postJSON<T>('/api/process', { model: geminiConfig.modelName, prompt });
-  }
-}
-
-// ---------- Sentence Edits Mode ----------
-
-/**
- * Rewrite sentences using the sentence edits protocol.
- * Returns replacements for sentences that were modified.
- * 
- * @param sentences Array of sentence tokens to rewrite
- * @param styleGuide The target style guide
- * @param globalContext Optional document summary (truncated to ~200 chars)
- * @param contextBefore Optional preceding text for flow reference
- * @param contextAfter Optional following text for flow reference
- * @returns ReplacementsResponse with array of index/text pairs
- */
-export const rewriteSentencesInInferenceMode = async (params: {
-  sentences: SentenceToken[];
-  styleGuide: StyleGuide;
-  globalContext?: string;
-  contextBefore?: string;
-  contextAfter?: string;
-}): Promise<ReplacementsResponse> => {
-  const { systemInstruction, getPrompt } = sentenceRewritePrompt;
-  
-  // Convert SentenceToken[] to SentenceForRewrite[]
-  const sentencesForRewrite: SentenceForRewrite[] = params.sentences.map(s => ({
-    index: s.index,
-    text: s.text,
-  }));
-  
-  const prompt = getPrompt({
-    sentences: sentencesForRewrite,
-    styleGuide: params.styleGuide,
-    globalContext: params.globalContext,
-    contextBefore: params.contextBefore,
-    contextAfter: params.contextAfter,
-  });
-  
-  const payload = {
-    model: geminiConfig.modelName,
-    prompt,
-    response_mime_type: 'application/json',
-  };
-  
-  try {
-    // Use extended timeout for sentence rewrite
-    const result = await postJSON<ReplacementsResponse>('/api/process', payload, SENTENCE_REWRITE_TIMEOUT_MS);
-    
-    // Validate response structure
-    if (!result || !Array.isArray(result.replacements)) {
-      console.warn('[rewriteSentences] Invalid response structure, returning empty replacements');
-      return { replacements: [] };
+    contents: [{ 
+      role: 'user', 
+      parts: [{ text: prompt }] 
+    }],
+    system_instruction: {
+      parts: [{ text: systemInstruction }]
+    },
+    generation_config: {
+      response_mime_type: 'application/json',
+      // response_schema: toJSONSchema<T>(), // 暂时禁用硬编码的 schema
+      temperature: geminiConfig.temperature
     }
-    
-    return result;
+  };
+
+  const endpoint = `/v1beta/models/${geminiConfig.modelName}:generateContent`;
+
+  try {
+    return await postJSONWithRetry<T>(endpoint, payload);
   } catch (e) {
-    console.error('[rewriteSentences] Error:', e);
+    console.warn('[Structured] API Request Failed', e);
     throw e;
   }
-};
+}

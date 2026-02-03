@@ -82,6 +82,23 @@
 
     <!-- Tailwind CSS via CDN for simplicity in this setup -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            animation: {
+              'indeterminate-bar': 'indeterminate-bar 1.5s infinite linear',
+            },
+            keyframes: {
+              'indeterminate-bar': {
+                '0%': { transform: 'translateX(-100%)' },
+                '100%': { transform: 'translateX(300%)' },
+              }
+            }
+          }
+        }
+      }
+    </script>
     <link rel="stylesheet" href="./index.css">
 <script type="importmap">
 {

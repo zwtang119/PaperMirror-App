@@ -1,35 +1,35 @@
 /**
- * Fidelity guardrails - ensure important information is preserved during rewriting.
- * Compares draft vs rewritten standard to detect information loss.
+ * 保真度护栏 - 确保重写过程中保留重要信息。
+ * 比较草稿与重写后的标准版，以检测信息丢失。
  */
 
 import type { FidelityGuardrails, FidelityAlert } from '../../types';
 import { splitSentencesCN } from './text';
 
 /**
- * Extract numbers from text (including decimals, percentages, etc.)
+ * 从文本中提取数字（包括小数、百分比等）
  */
 export function extractNumbers(text: string): Set<string> {
   const numbers = new Set<string>();
   
-  // Match various number formats:
-  // - Simple integers: 123
-  // - Decimals: 12.34
-  // - Percentages: 85%, 85.5%
-  // - Scientific notation: 1.5e-3, 2E6
-  // - Numbers with units: 10mm, 5kg, 100℃
+  // 匹配各种数字格式：
+  // - 简单整数：123
+  // - 小数：12.34
+  // - 百分比：85%, 85.5%
+  // - 科学计数法：1.5e-3, 2E6
+  // - 带单位的数字：10mm, 5kg, 100℃
   const patterns = [
-    /\d+(?:\.\d+)?%/g,                    // Percentages
-    /\d+(?:\.\d+)?[eE][+-]?\d+/g,         // Scientific notation
-    /\d+(?:\.\d+)?(?:mm|cm|m|km|mg|g|kg|ml|L|℃|°C|Hz|kHz|MHz|GHz|ms|s|min|h)/gi, // With units
-    /\d+\.\d+/g,                          // Decimals
-    /\d{2,}/g,                            // Integers (2+ digits to avoid single digits)
+    /\d+(?:\.\d+)?%/g,                    // 百分比
+    /\d+(?:\.\d+)?[eE][+-]?\d+/g,         // 科学计数法
+    /\d+(?:\.\d+)?(?:mm|cm|m|km|mg|g|kg|ml|L|℃|°C|Hz|kHz|MHz|GHz|ms|s|min|h)/gi, // 带单位
+    /\d+\.\d+/g,                          // 小数
+    /\d{2,}/g,                            // 整数（2位以上，避免单位数）
   ];
   
   for (const pattern of patterns) {
     const matches = text.match(pattern) || [];
     for (const match of matches) {
-      // Normalize: remove trailing zeros and common variations
+      // 标准化：移除末尾的零和常见变体
       const normalized = match.toLowerCase().replace(/\.0+$/, '');
       numbers.add(normalized);
     }
@@ -39,25 +39,25 @@ export function extractNumbers(text: string): Set<string> {
 }
 
 /**
- * Extract English acronyms and abbreviations from text.
+ * 从文本中提取英文首字母缩略词和缩写。
  */
 export function extractAcronyms(text: string): Set<string> {
   const acronyms = new Set<string>();
   
-  // Match acronyms:
-  // - All caps 2+ letters: CNN, HTTP, IoT
-  // - Mixed case tech terms: ResNet, VGG16, GPT-4
-  // - Abbreviations with numbers: ResNet-50, BERT-base
+  // 匹配缩略词：
+  // - 全大写2个以上字母：CNN, HTTP, IoT
+  // - 混合大小写的技术术语：ResNet, VGG16, GPT-4
+  // - 带数字的缩写：ResNet-50, BERT-base
   const patterns = [
-    /\b[A-Z]{2,}\d*\b/g,                      // All caps: CNN, HTTP, VGG16
-    /\b[A-Z][a-zA-Z]*[A-Z][a-zA-Z]*\d*\b/g,   // CamelCase with caps: ResNet, IoT
-    /\b[A-Z][a-z]+(?:-[A-Z0-9][a-zA-Z0-9]*)?\b/g,  // Proper nouns with suffix
+    /\b[A-Z]{2,}\d*\b/g,                      // 全大写：CNN, HTTP, VGG16
+    /\b[A-Z][a-zA-Z]*[A-Z][a-zA-Z]*\d*\b/g,   // 驼峰式大写：ResNet, IoT
+    /\b[A-Z][a-z]+(?:-[A-Z0-9][a-zA-Z0-9]*)?\b/g,  // 带后缀的专有名词
   ];
   
   for (const pattern of patterns) {
     const matches = text.match(pattern) || [];
     for (const match of matches) {
-      // Only include if it looks like a technical term (not common words)
+      // 仅包含看起来像技术术语的词（非普通词汇）
       if (match.length >= 2 && !/^(The|This|That|These|Those|With|From|Into|Upon)$/.test(match)) {
         acronyms.add(match);
       }
@@ -68,8 +68,8 @@ export function extractAcronyms(text: string): Set<string> {
 }
 
 /**
- * Calculate retention rate between two sets.
- * Returns percentage of original items that are retained.
+ * 计算两个集合之间的保留率。
+ * 返回保留的原始项目的百分比。
  */
 function calculateRetentionRate(original: Set<string>, rewritten: Set<string>): number {
   if (original.size === 0) return 100;
@@ -85,7 +85,7 @@ function calculateRetentionRate(original: Set<string>, rewritten: Set<string>): 
 }
 
 /**
- * Find items in original that are missing from rewritten.
+ * 查找原始文本中在重写文本中缺失的项目。
  */
 function findMissingItems(original: Set<string>, rewritten: Set<string>): string[] {
   const missing: string[] = [];
@@ -98,7 +98,7 @@ function findMissingItems(original: Set<string>, rewritten: Set<string>): string
 }
 
 /**
- * Try to locate a token in the original text and return approximate sentence index.
+ * 尝试在原始文本中定位令牌并返回大致的句子索引。
  */
 function findSentenceIndex(text: string, token: string): number {
   const sentences = splitSentencesCN(text);
@@ -111,7 +111,7 @@ function findSentenceIndex(text: string, token: string): number {
 }
 
 /**
- * Calculate fidelity guardrails comparing draft to rewritten standard.
+ * 计算保真度护栏，比较草稿和重写的标准版。
  */
 export function calculateFidelityGuardrails(
   draftText: string,
@@ -127,25 +127,25 @@ export function calculateFidelityGuardrails(
   
   const alerts: FidelityAlert[] = [];
   
-  // Generate alerts for missing numbers
+  // 生成缺失数字的警报
   const missingNumbers = findMissingItems(draftNumbers, standardNumbers);
-  for (const num of missingNumbers.slice(0, 5)) { // Limit to 5 alerts
+  for (const num of missingNumbers.slice(0, 5)) { // 限制为5个警报
     const sentenceIndex = findSentenceIndex(draftText, num);
     alerts.push({
       type: 'number_loss',
       sentenceIndex,
-      detail: `Missing number: ${num}`,
+      detail: `缺失数字: ${num}`,
     });
   }
   
-  // Generate alerts for missing acronyms
+  // 生成缺失缩略词的警报
   const missingAcronyms = findMissingItems(draftAcronyms, standardAcronyms);
-  for (const acronym of missingAcronyms.slice(0, 5)) { // Limit to 5 alerts
+  for (const acronym of missingAcronyms.slice(0, 5)) { // 限制为5个警报
     const sentenceIndex = findSentenceIndex(draftText, acronym);
     alerts.push({
       type: 'acronym_change',
       sentenceIndex,
-      detail: `Missing acronym: ${acronym}`,
+      detail: `缺失缩略词: ${acronym}`,
     });
   }
   

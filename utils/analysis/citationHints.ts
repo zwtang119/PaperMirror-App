@@ -1,20 +1,20 @@
 /**
- * Citation hints - identify sentences that may need citations and generate search queries.
- * Does NOT generate actual citations - only provides search keywords.
+ * 引用提示 - 识别可能需要引用的句子并生成搜索查询。
+ * 不生成实际的引用 - 仅提供搜索关键词。
  */
 
 import type { CitationSuggestion } from '../../types';
 import { splitSentencesCN } from './text';
 
-// Rule version for tracking
+// 规则版本，用于追踪
 const RULES_VERSION = '1.0.0';
 
-// Chinese technical term suffixes for extraction
+// 中文技术术语后缀，用于提取
 const CHINESE_TECH_SUFFIXES = [
   '技术', '方法', '算法', '模型', '系统', '网络', '框架', '机制', '理论', '分析'
 ];
 
-// Patterns indicating citation need
+// 指示需要引用的模式
 const CITATION_PATTERNS = {
   background: [
     '近年来',
@@ -87,7 +87,7 @@ const CITATION_PATTERNS = {
   ],
 };
 
-// Patterns indicating this is the author's own work (should NOT cite)
+// 指示这是作者自己工作的模式（不应引用）
 const OWN_WORK_PATTERNS = [
   '本文提出',
   '本研究',
@@ -104,7 +104,7 @@ const OWN_WORK_PATTERNS = [
 type CitationReason = 'background' | 'definition' | 'method' | 'comparison' | 'statistic';
 
 /**
- * Check if a sentence refers to the author's own work.
+ * 检查句子是否指代作者自己的工作。
  */
 function isOwnWork(sentence: string): boolean {
   for (const pattern of OWN_WORK_PATTERNS) {
@@ -137,19 +137,19 @@ function needsCitation(sentence: string): CitationReason | null {
 }
 
 /**
- * Extract key terms from a sentence for search queries.
- * Returns Chinese and English-friendly search terms.
+ * 从句子中提取关键术语用于搜索查询。
+ * 返回对中文和英文友好的搜索词。
  */
 function extractKeyTerms(sentence: string): string[] {
   const terms: string[] = [];
   
-  // Extract quoted terms
+  // 提取引号中的术语
   const quotedMatches = sentence.match(/[""]([^""]+)[""]/g) || [];
   for (const match of quotedMatches) {
     terms.push(match.replace(/[""]/g, ''));
   }
   
-  // Extract English terms (avoiding hyphen-only matches)
+  // 提取英文术语（避免仅连字符的匹配）
   const englishMatches = sentence.match(/[A-Za-z][A-Za-z0-9]*(?:-[A-Za-z0-9]+)*/g) || [];
   for (const match of englishMatches) {
     if (match.length >= 3 && !/^(the|and|for|with|from|this|that|these|those|are|was|were|been|have|has|had)$/i.test(match)) {
@@ -157,24 +157,24 @@ function extractKeyTerms(sentence: string): string[] {
     }
   }
   
-  // Extract Chinese technical terms (rough heuristic: sequences of 2-6 characters that look technical)
+  // 提取中文技术术语（粗略启发式：看起来像技术术语的2-6个字符序列）
   const techSuffixPattern = CHINESE_TECH_SUFFIXES.join('|');
   const chineseMatches = sentence.match(new RegExp(`[\\u4e00-\\u9fa5]{2,6}(?:${techSuffixPattern})`, 'g')) || [];
   terms.push(...chineseMatches);
   
-  // Deduplicate and limit
+  // 去重并限制数量
   const uniqueTerms = [...new Set(terms)];
   return uniqueTerms.slice(0, 4);
 }
 
 /**
- * Generate search queries based on sentence and reason.
+ * 根据句子和原因生成搜索查询。
  */
 function generateQueries(sentence: string, reason: CitationReason): string[] {
   const keyTerms = extractKeyTerms(sentence);
   const queries: string[] = [];
   
-  // Query suffixes based on reason
+  // 基于原因的查询后缀
   const suffixes: Record<CitationReason, { cn: string[]; en: string[] }> = {
     background: {
       cn: ['综述', '研究进展', '发展现状'],
@@ -200,14 +200,14 @@ function generateQueries(sentence: string, reason: CitationReason): string[] {
   
   const reasonSuffixes = suffixes[reason];
   
-  // Generate Chinese queries
+  // 生成中文查询
   for (const term of keyTerms.slice(0, 2)) {
     for (const suffix of reasonSuffixes.cn.slice(0, 1)) {
       queries.push(`${term} ${suffix}`);
     }
   }
   
-  // Generate English queries
+  // 生成英文查询
   const englishTerms = keyTerms.filter(t => /[A-Za-z]/.test(t));
   for (const term of englishTerms.slice(0, 2)) {
     for (const suffix of reasonSuffixes.en.slice(0, 1)) {
@@ -215,7 +215,7 @@ function generateQueries(sentence: string, reason: CitationReason): string[] {
     }
   }
   
-  // Add fallback if no terms extracted
+  // 如果没有提取到术语，添加回退
   if (queries.length === 0) {
     const fallbackTerm = sentence.slice(0, 20).replace(/[，。？！]/g, '');
     queries.push(`${fallbackTerm} ${reasonSuffixes.cn[0]}`);
@@ -225,8 +225,8 @@ function generateQueries(sentence: string, reason: CitationReason): string[] {
 }
 
 /**
- * Generate citation suggestions for a draft text.
- * Returns sentences that likely need citations along with search queries.
+ * 为草稿文本生成引用建议。
+ * 返回可能需要引用的句子以及搜索查询。
  */
 export function generateCitationSuggestions(draftText: string): {
   rulesVersion: string;
@@ -248,7 +248,7 @@ export function generateCitationSuggestions(draftText: string): {
     }
   }
   
-  // Limit to reasonable number
+  // 限制为合理数量
   return {
     rulesVersion: RULES_VERSION,
     items: items.slice(0, 20),

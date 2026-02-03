@@ -1,11 +1,11 @@
 /**
- * Style metrics calculation for three-way comparison (sample vs draft vs standard).
+ * 风格指标计算 - 用于三方比较（范文 vs 草稿 vs 标准版）。
  */
 
 import type { DetailedMetrics } from '../../types';
 import { splitSentencesCN, getBodyText, normalizeText } from './text';
 
-// Connector word lists (Chinese academic writing)
+// 连接词列表（中文学术写作）
 const CONNECTOR_WORDS = {
   causal: ['因此', '所以', '由于', '因为', '故', '从而', '以致', '导致', '因而', '于是'],
   adversative: ['然而', '但是', '不过', '尽管', '虽然', '却', '但', '可是', '反而', '相反'],
@@ -13,7 +13,7 @@ const CONNECTOR_WORDS = {
   emphatic: ['尤其', '特别', '值得注意的是', '需要指出的是', '显然', '明显', '重要的是', '关键是'],
 };
 
-// Template phrases common in AI-generated text
+// AI 生成文本中常见的模板短语
 const TEMPLATE_PHRASES = [
   '本文首先', '本文其次', '本文最后', '本文提出',
   '综上所述', '总而言之', '总的来说',
@@ -25,7 +25,7 @@ const TEMPLATE_PHRASES = [
 ];
 
 /**
- * Calculate the percentile value from a sorted array.
+ * 计算排序数组的百分位数。
  */
 function percentile(sortedArr: number[], p: number): number {
   if (sortedArr.length === 0) return 0;
@@ -37,7 +37,7 @@ function percentile(sortedArr: number[], p: number): number {
 }
 
 /**
- * Calculate mean of an array.
+ * 计算数组的平均值。
  */
 function mean(arr: number[]): number {
   if (arr.length === 0) return 0;
@@ -45,7 +45,7 @@ function mean(arr: number[]): number {
 }
 
 /**
- * Count occurrences of a pattern in text.
+ * 计算文本中模式出现的次数。
  */
 function countPattern(text: string, pattern: string | RegExp): number {
   if (typeof pattern === 'string') {
@@ -61,7 +61,7 @@ function countPattern(text: string, pattern: string | RegExp): number {
 }
 
 /**
- * Calculate detailed metrics for a given text.
+ * 计算给定文本的详细指标。
  */
 export function calculateMetrics(text: string): DetailedMetrics {
   const normalized = normalizeText(text);
@@ -69,7 +69,7 @@ export function calculateMetrics(text: string): DetailedMetrics {
   const sentences = splitSentencesCN(text);
   const textLength = bodyText.length;
   
-  // Sentence length statistics
+  // 句子长度统计
   const sentenceLengths = sentences.map(s => s.text.length);
   const sortedLengths = [...sentenceLengths].sort((a, b) => a - b);
   const longSentences = sentenceLengths.filter(len => len > 50);
@@ -83,7 +83,7 @@ export function calculateMetrics(text: string): DetailedMetrics {
       : 0,
   };
   
-  // Punctuation density (per 1000 chars)
+  // 标点符号密度（每1000字符）
   const commaCount = countPattern(bodyText, '，') + countPattern(bodyText, ',');
   const semicolonCount = countPattern(bodyText, '；') + countPattern(bodyText, ';');
   const parenthesisCount = countPattern(bodyText, '（') + countPattern(bodyText, '）') +
@@ -96,7 +96,7 @@ export function calculateMetrics(text: string): DetailedMetrics {
     parenthesis: Math.round(parenthesisCount * perThousand * 10) / 10,
   };
   
-  // Connector word counts
+  // 连接词计数
   const connectorCounts = {
     causal: 0,
     adversative: 0,

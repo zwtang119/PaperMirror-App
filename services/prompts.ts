@@ -6,7 +6,7 @@ const escapeJsonString = (obj: any) => JSON.stringify(obj, null, 2);
 
 export const inferencePrompts = {
   extractStyleGuide: {
-    systemInstruction: `You are an elite academic editor with a PhD in Linguistics, specializing in quantitative stylistic analysis. Your sole function is to analyze a given academic text and output its stylistic features as a perfectly structured JSON object.`,
+    systemInstruction: `你是一位拥有语言学博士学位的精英学术编辑，专注于量化风格分析。你的唯一职责是分析给定的学术文本，并将其风格特征提取为一个结构完美的 JSON 对象。`,
     getPrompt: (samplePaperContent: string) => {
       const FEW_SHOT_EXAMPLE = {
         averageSentenceLength: 22.5,
@@ -18,25 +18,25 @@ export const inferencePrompts = {
       };
       
       return `
-## CONTEXT
-The user has provided an academic paper inside the <DOCUMENT_CONTENT> tags.
+## 上下文
+用户在 <DOCUMENT_CONTENT> 标签内提供了一篇学术论文。
 
 <DOCUMENT_CONTENT>
 ${samplePaperContent}
 </DOCUMENT_CONTENT>
 
-## TASK
-Analyze the academic paper provided in the context and extract its key stylistic features.
+## 任务
+分析上下文中提供的学术论文，并提取其关键风格特征。
 
-## CONSTRAINTS
-- All calculated metrics must be numerical types (number/integer), not strings.
-- 'tone' should be described in 2-3 concise words.
-- 'structure' summary must be a single, descriptive sentence.
-- You must adhere strictly to the JSON schema provided.
-- Do not add any keys not present in the format example.
+## 约束
+- 所有计算出的指标必须是数值类型（number/integer），不能是字符串。
+- 'tone'（语调）应该用 2-3 个简洁的词描述。
+- 'structure'（结构）摘要必须是一句描述性的句子。
+- 你必须严格遵守提供的 JSON 模式。
+- 不要添加示例格式中不存在的任何键。
 
-## FORMAT
-Your entire output must be a single, valid JSON object. Follow the structure of this example precisely.
+## 格式
+你的整个输出必须是一个单一的、有效的 JSON 对象。严格按照此示例的结构进行操作。
 
 \`\`\`json
 ${escapeJsonString(FEW_SHOT_EXAMPLE)}
@@ -45,11 +45,10 @@ ${escapeJsonString(FEW_SHOT_EXAMPLE)}
     }
   },
   rewriteChunk: {
-    systemInstruction: `You are a precision-focused academic writing assistant. Your task is to execute a style-transfer operation on a chunk of text based on a strict style guide and surrounding context. Your entire output must be a single, valid JSON object.`,
+    systemInstruction: `你是一位追求精准的学术写作助手。你的任务是根据严格的风格指南和全文上下文，对文档中的特定部分执行风格迁移操作。你的整个输出必须是一个单一的、有效的 JSON 对象。`,
     getPrompt: (params: {
         mainContent: string;
-        contextBefore: string;
-        contextAfter: string;
+        fullDocumentContent: string;
         styleGuide: StyleGuide;
         documentContext: DocumentContext;
         currentSectionTitle?: string;
@@ -61,13 +60,12 @@ ${escapeJsonString(FEW_SHOT_EXAMPLE)}
           : 'N/A';
         
         return `
-## CONTEXT
-You are provided with several pieces of information:
-1.  <STYLE_GUIDE>: The target style to which the content must be adapted.
-2.  <GLOBAL_CONTEXT>: The overall summary and current section context of the paper.
-3.  <LOCAL_CONTEXT_BEFORE>: The last few lines of the previous text chunk to ensure a smooth transition.
-4.  <MAIN_CONTENT>: The specific text chunk that you MUST rewrite.
-5.  <LOCAL_CONTEXT_AFTER>: The first few lines of the next text chunk.
+## 上下文
+你被提供了以下几条信息：
+1.  <STYLE_GUIDE>: 内容必须适应的目标风格。
+2.  <GLOBAL_CONTEXT>: 论文的整体摘要和当前章节的上下文。
+3.  <FULL_DOCUMENT>: 为了提供最完美的上下文理解，这是文档的全文内容。
+4.  <TARGET_SECTION>: 你必须重写的具体文本块。
 
 <STYLE_GUIDE>
 ${escapeJsonString(params.styleGuide)}
@@ -78,48 +76,86 @@ Document Summary: ${params.documentContext.documentSummary}
 Current Section (${params.currentSectionTitle || 'General'}): ${relevantSectionSummary}
 </GLOBAL_CONTEXT>
 
-<LOCAL_CONTEXT_BEFORE>
-${params.contextBefore}
-</LOCAL_CONTEXT_BEFORE>
+<FULL_DOCUMENT>
+${params.fullDocumentContent}
+</FULL_DOCUMENT>
 
-<MAIN_CONTENT>
+<TARGET_SECTION>
 ${params.mainContent}
-</MAIN_CONTENT>
+</TARGET_SECTION>
 
-<LOCAL_CONTEXT_AFTER>
-${params.contextAfter}
-</LOCAL_CONTEXT_AFTER>
+## 任务
+仅重写 <TARGET_SECTION> 部分的文本，使其符合 <STYLE_GUIDE> 中定义的风格，同时确保与 <FULL_DOCUMENT> 中的其余部分保持逻辑和语气的一致性。
 
-## TASK
-Rewrite the text from the <MAIN_CONTENT> section to match the style defined in the <STYLE_GUIDE>.
+## 约束
+- **你必须只重写 <TARGET_SECTION> 中的内容。**
+- **你绝不能重写或更改 <FULL_DOCUMENT> 中的其他部分。**
+- **你绝不能更改任何事实信息、数据或引用。**
+- 生成三个不同版本的重写：
+  - \`conservative\` (保守): 最小化更改。仅修正明显的语法错误和明显的语气不匹配。尽可能少改动单词。
+  - \`standard\` (标准): 风格指南的平衡应用。这是默认选项，目标是显著但不突兀的风格转变（例如，约 30-50% 的更改率）。
+  - \`enhanced\` (增强): 风格指南的激进应用。显著改变句子结构和词汇，以非常紧密地匹配目标风格。
 
-## CONSTRAINTS
-- **You MUST ONLY rewrite the content from <MAIN_CONTENT>.**
-- **You MUST NOT rewrite or alter the text from any other context sections.**
-- **You MUST NOT alter any factual information, data, or citations.**
-- Produce three distinct versions of the rewrite:
-  - \`conservative\`: Minimal changes. Only fix obvious grammatical errors and blatant tone mismatches. Change as few words as possible.
-  - \`standard\`: A balanced application of the style guide. This is the default and should aim for a noticeable but not jarring style shift (e.g., ~30-50% change rate).
-  - \`enhanced\`: An aggressive application of the style guide. Significantly alter sentence structure and vocabulary to very closely match the target style.
-- Ensure the rewritten text flows logically with the surrounding local context.
+## 格式
+你的整个输出必须是一个单一的、有效的 JSON 对象，包含三个必需的字符串键："conservative", "standard", 和 "enhanced"。
+`;
+    }
+  },
+  rewriteFullDocument: {
+    systemInstruction: `你是一位追求精准的学术写作助手。你的任务是根据严格的风格指南，将整篇文档进行风格迁移。你的输出必须是一个单一的、有效的 JSON 对象。`,
+    getPrompt: (params: {
+        fullDocumentContent: string;
+        styleGuide: StyleGuide;
+        documentContext: DocumentContext;
+    }) => {
+        return `
+## 上下文
+你被提供了以下信息：
+1.  <STYLE_GUIDE>: 内容必须适应的目标风格。
+2.  <GLOBAL_CONTEXT>: 论文的整体摘要。
+3.  <FULL_DOCUMENT>: 你必须重写的完整文档。
 
-## FORMAT
-Your entire output must be a single, valid JSON object with three required string keys: "conservative", "standard", and "enhanced".
+<STYLE_GUIDE>
+${escapeJsonString(params.styleGuide)}
+</STYLE_GUIDE>
+
+<GLOBAL_CONTEXT>
+Document Summary: ${params.documentContext.documentSummary}
+</GLOBAL_CONTEXT>
+
+<FULL_DOCUMENT>
+${params.fullDocumentContent}
+</FULL_DOCUMENT>
+
+## 任务
+重写 <FULL_DOCUMENT> 中的**所有内容**，使其符合 <STYLE_GUIDE> 中定义的风格。保持文档的原始 Markdown 结构（标题、列表等）。
+
+## 约束
+- **必须处理整个文档，不要遗漏任何章节。**
+- **输出必须包含完整的文档内容，绝对不要使用省略号 (...) 或仅输出摘要。**
+- **你绝不能更改任何事实信息、数据或引用。**
+- 生成三个不同版本的重写：
+  - \`conservative\` (保守): 最小化更改。仅修正明显的语法错误和明显的语气不匹配。尽可能少改动单词。
+  - \`standard\` (标准): 风格指南的平衡应用。这是默认选项，目标是显著但不突兀的风格转变。
+  - \`enhanced\` (增强): 风格指南的激进应用。显著改变句子结构和词汇，以非常紧密地匹配目标风格。
+
+## 格式
+你的整个输出必须是一个单一的、有效的 JSON 对象，包含三个必需的字符串键："conservative", "standard", 和 "enhanced"。
 `;
     }
   },
   generateFinalReport: {
-    systemInstruction: `You are a quantitative analysis bot for academic writing. Your task is to compare an original draft with its rewritten version against a style guide and generate a final analysis report as a single, valid JSON object.`,
+    systemInstruction: `你是一个用于学术写作的量化分析机器人。你的任务是根据风格指南比较原始草稿及其重写版本，并生成一个单一的、有效的 JSON 对象作为最终分析报告。`,
     getPrompt: (params: {
         sampleStyleGuide: StyleGuide,
         originalDraftContent: string,
         rewrittenStandardContent: string
     }) => `
-## CONTEXT
-You have three inputs:
-1.  <SAMPLE_PAPER_STYLE_GUIDE>: The stylistic benchmark.
-2.  <ORIGINAL_DRAFT>: The original text before any changes.
-3.  <REWRITTEN_STANDARD_VERSION>: The rewritten text after applying the style guide.
+## 上下文
+你有三个输入：
+1.  <SAMPLE_PAPER_STYLE_GUIDE>: 风格基准。
+2.  <ORIGINAL_DRAFT>: 任何更改之前的原始文本。
+3.  <REWRITTEN_STANDARD_VERSION>: 应用风格指南后的重写文本。
 
 <SAMPLE_PAPER_STYLE_GUIDE>
 ${escapeJsonString(params.sampleStyleGuide)}
@@ -133,17 +169,17 @@ ${params.originalDraftContent}
 ${params.rewrittenStandardContent}
 </REWRITTEN_STANDARD_VERSION>
 
-## TASK
-Compare the original draft to the rewritten version against the provided style guide, and generate a quantitative analysis report.
+## 任务
+根据提供的风格指南，比较原始草稿与重写版本，并生成量化分析报告。
 
-## CONSTRAINTS
-- Calculate the style metrics for both the original draft and the sample paper.
-- \`changeRatePerParagraph\` must be an array of floats, one for each paragraph in the draft, representing the estimated percentage of modification (0.0 to 1.0).
-- \`consistencyScore\` must be a single float (0.0 to 1.0) measuring how consistently the new style was applied across all paragraphs.
-- All numerical values in the output must be of type number, not string.
+## 约束
+- 计算原始草稿和样本论文的风格指标。
+- \`changeRatePerParagraph\` 必须是一个浮点数数组，对应草稿中的每一段，代表估计的修改百分比（0.0 到 1.0）。
+- \`consistencyScore\` 必须是一个单一的浮点数（0.0 到 1.0），衡量新风格在所有段落中应用的一致性。
+- 输出中的所有数值必须是数字类型，不能是字符串。
 
-## FORMAT
-Your entire output must be a single, valid JSON object that strictly adheres to the provided schema.
+## 格式
+你的整个输出必须是一个单一的、有效的 JSON 对象，严格遵守提供的模式。
 `,
   }
 };
@@ -151,118 +187,25 @@ Your entire output must be a single, valid JSON object that strictly adheres to 
 // --- PROMPT FOR DOCUMENT CONTEXT ---
 
 export const documentContextPrompt = {
-    systemInstruction: `You are a document analysis AI. Your task is to read an entire document and create a structured JSON summary, identifying main sections and summarizing each, plus an overall summary.`,
+    systemInstruction: `你是一个文档分析 AI。你的任务是阅读整个文档并创建一个结构化的 JSON 摘要，识别主要章节并总结每一章，以及提供一个整体摘要。`,
     getPrompt: (fullDocumentContent: string) => `
-## CONTEXT
-The user has provided a full academic document.
+## 上下文
+用户提供了一篇完整的学术文档。
 
 <FULL_DOCUMENT>
 ${fullDocumentContent}
 </FULL_DOCUMENT>
 
-## TASK
-Summarize the full document and each of its major sections identified by headings.
+## 任务
+总结整个文档以及由标题标识的每个主要部分。
 
-## CONSTRAINTS
-- Section titles should be extracted as accurately as possible from headings.
-- Summaries must be concise, typically 1-2 sentences each.
-- If no clear sections are found, provide a single entry in 'sectionSummaries' with the title "Full Document".
+## 约束
+- 章节标题应尽可能准确地从标题中提取。
+- 摘要必须简洁，通常每个 1-2 句话。
+- 如果没有找到清晰的章节，请在 'sectionSummaries' 中提供一个标题为 "Full Document" 的条目。
 
-## FORMAT
-Your entire output must be a single, valid JSON object with the keys "documentSummary" and "sectionSummaries".
+## 格式
+你的整个输出必须是一个单一的、有效的 JSON 对象，包含键 "documentSummary" 和 "sectionSummaries"。
 `,
 };
 
-// --- PROMPT FOR SENTENCE-LEVEL REWRITING ---
-
-export interface SentenceForRewrite {
-  index: number;
-  text: string;
-}
-
-/**
- * Generate prompt for sentence-level rewriting with replacements.
- * This prompt instructs the model to output a JSON object with replacements array.
- */
-export const sentenceRewritePrompt = {
-  systemInstruction: `You are a precision-focused academic writing assistant. Your task is to rewrite individual sentences to match a target academic style while preserving all factual content. You MUST output a single valid JSON object containing only the "replacements" array.`,
-  
-  getPrompt: (params: {
-    sentences: SentenceForRewrite[];
-    styleGuide: StyleGuide;
-    globalContext?: string;
-    contextBefore?: string;
-    contextAfter?: string;
-  }) => {
-    // Create a compact style summary for the prompt with safe property access
-    const stylePoints = [
-      `Average sentence length: ${params.styleGuide.averageSentenceLength ?? 'N/A'} words`,
-      `Tone: ${params.styleGuide.tone ?? 'Academic'}`,
-      `Common transitions: ${(params.styleGuide.commonTransitions ?? []).slice(0, 5).join(', ') || 'N/A'}`,
-      `Passive voice: ${params.styleGuide.passiveVoicePercentage ?? 'N/A'}%`,
-    ].join('\n');
-
-    // Truncate global context if too long (max ~200 chars)
-    const truncatedContext = params.globalContext 
-      ? (params.globalContext.length > 200 
-          ? params.globalContext.substring(0, 197) + '...'
-          : params.globalContext)
-      : '';
-
-    // Format sentences for the prompt using JSON.stringify for proper escaping
-    const sentenceList = params.sentences
-      .map(s => `  { "index": ${s.index}, "text": ${JSON.stringify(s.text)} }`)
-      .join(',\n');
-
-    const exampleOutput = {
-      replacements: [
-        { index: 0, text: "示例：这是改写后的第一个句子。" },
-        { index: 2, text: "示例：这是改写后的第三个句子。" }
-      ]
-    };
-
-    return `
-## STYLE GUIDE (Target Style)
-${stylePoints}
-
-${truncatedContext ? `## DOCUMENT CONTEXT\n${truncatedContext}\n` : ''}
-${params.contextBefore ? `## PRECEDING TEXT (for flow reference only)\n${params.contextBefore}\n` : ''}
-${params.contextAfter ? `## FOLLOWING TEXT (for flow reference only)\n${params.contextAfter}\n` : ''}
-
-## SENTENCES TO REWRITE
-The following sentences need to be rewritten to match the target style:
-
-[
-${sentenceList}
-]
-
-## TASK
-Rewrite each sentence to match the target academic style. Apply a "standard" level of rewriting:
-- Improve clarity and flow
-- Adjust sentence structure to match target style
-- Preserve the original meaning completely
-- Keep a ~30-50% change rate (not too conservative, not too aggressive)
-
-## STRICT CONSTRAINTS
-1. **Preserve all numbers, percentages, dates, and units exactly** (e.g., "35.7%", "2023年", "500万")
-2. **Preserve all citations, references, and acronyms exactly** (e.g., "[1]", "WHO", "GDP")
-3. **Preserve all proper nouns and technical terms** (e.g., person names, organization names)
-4. **Do NOT add or remove any factual information**
-5. **Each replacement text must be a single sentence** - do not include paragraph breaks (\\n\\n)
-6. **If a sentence needs no changes, omit it from replacements** (do not include it)
-
-## OUTPUT FORMAT
-Your entire output MUST be a single valid JSON object with this exact structure:
-
-\`\`\`json
-${escapeJsonString(exampleOutput)}
-\`\`\`
-
-Rules:
-- The "replacements" array contains objects with "index" (number) and "text" (string)
-- Only include sentences that were actually modified
-- If no changes are needed for any sentence, return: {"replacements": []}
-- Do NOT include any text before or after the JSON object
-`;
-  }
-};

@@ -1,11 +1,11 @@
 /**
- * Mirror Score calculation - measures how close a text is to the sample style.
- * Main narrative: standard should be closer to sample than draft.
+ * 镜像分数计算 - 衡量文本与范文风格的接近程度。
+ * 主要叙述：标准版应该比草稿更接近范文。
  */
 
 import type { DetailedMetrics, MirrorScore } from '../../types';
 
-// Default weights for score calculation
+// 分数计算的默认权重
 const DEFAULT_WEIGHTS = {
   sentence: 0.4,
   connectors: 0.25,
@@ -13,25 +13,25 @@ const DEFAULT_WEIGHTS = {
   templates: 0.2,
 };
 
-// Expected max differences for normalization
+// 用于归一化的最大预期差异
 const SENTENCE_LENGTH_MAX_EXPECTED = {
-  mean: 50,      // Max expected difference in mean sentence length
-  percentile: 50, // Max expected difference in p50
-  p90: 100,      // Max expected difference in p90
-  longRate: 100, // Max expected difference in long sentence rate (percentage)
+  mean: 50,      // 平均句长的最大预期差异
+  percentile: 50, // 中位数的最大预期差异
+  p90: 100,      // P90的最大预期差异
+  longRate: 100, // 长句率（百分比）的最大预期差异
 };
 
 const PUNCTUATION_MAX_EXPECTED = {
-  comma: 30,        // Max expected comma density difference per 1k chars
-  semicolon: 10,    // Max expected semicolon density difference
-  parenthesis: 20,  // Max expected parenthesis density difference
+  comma: 30,        // 每千字逗号密度的最大预期差异
+  semicolon: 10,    // 分号密度的最大预期差异
+  parenthesis: 20,  // 括号密度的最大预期差异
 };
 
-const TEMPLATE_MAX_EXPECTED = 5; // Max expected template density difference per 1k chars
+const TEMPLATE_MAX_EXPECTED = 5; // 每千字模板密度的最大预期差异
 
 /**
- * Calculate normalized distance between two values.
- * Returns 0 when values are identical, 1 when maximally different.
+ * 计算两个值之间的归一化距离。
+ * 值为相同时返回0，差异最大时返回1。
  */
 function normalizedDiff(a: number, b: number, maxExpected: number): number {
   if (maxExpected === 0) return 0;
@@ -40,8 +40,8 @@ function normalizedDiff(a: number, b: number, maxExpected: number): number {
 }
 
 /**
- * Calculate sentence length distance from sample.
- * Considers mean, p50, p90, and longRate50.
+ * 计算句子长度与范文的距离。
+ * 考虑平均值、p50、p90和长句率。
  */
 function sentenceLengthDistance(
   target: DetailedMetrics['sentenceLength'],
@@ -52,18 +52,18 @@ function sentenceLengthDistance(
   const p90Diff = normalizedDiff(target.p90, sample.p90, SENTENCE_LENGTH_MAX_EXPECTED.p90);
   const longRateDiff = normalizedDiff(target.longRate50, sample.longRate50, SENTENCE_LENGTH_MAX_EXPECTED.longRate);
   
-  // Weighted combination
+  // 加权组合
   return meanDiff * 0.4 + p50Diff * 0.3 + p90Diff * 0.2 + longRateDiff * 0.1;
 }
 
 /**
- * Calculate connector distribution distance from sample.
+ * 计算连接词分布与范文的距离。
  */
 function connectorDistance(
   target: DetailedMetrics['connectorCounts'],
   sample: DetailedMetrics['connectorCounts']
 ): number {
-  // Normalize to proportions if total > 0
+  // 如果总数 > 0，则归一化为比例
   const targetTotal = target.total || 1;
   const sampleTotal = sample.total || 1;
   
@@ -81,19 +81,19 @@ function connectorDistance(
     emphatic: sample.emphatic / sampleTotal,
   };
   
-  // L1 distance between proportions
+  // 比例之间的 L1 距离
   const l1Distance = 
     Math.abs(targetProportions.causal - sampleProportions.causal) +
     Math.abs(targetProportions.adversative - sampleProportions.adversative) +
     Math.abs(targetProportions.additive - sampleProportions.additive) +
     Math.abs(targetProportions.emphatic - sampleProportions.emphatic);
   
-  // Max L1 distance is 2 (when distributions are completely opposite)
+  // 最大 L1 距离为 2（当分布完全相反时）
   return Math.min(l1Distance / 2, 1);
 }
 
 /**
- * Calculate punctuation density distance from sample.
+ * 计算标点密度与范文的距离。
  */
 function punctuationDistance(
   target: DetailedMetrics['punctuationDensity'],

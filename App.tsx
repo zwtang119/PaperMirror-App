@@ -51,8 +51,8 @@ const App: React.FC = () => {
     startMigration({ samplePaper, draftPaper });
   }, [samplePaper, draftPaper, startMigration]);
   
-  const mainTitle = 'PaperMirror: AI Academic Style Transfer';
-  const mainDescription = 'Transform your draft into a publication-ready manuscript by mirroring the style of top-tier journals. ';
+  const mainTitle = 'PaperMirror: AI 学术风格迁移';
+  const mainDescription = '模仿顶刊风格，将您的草稿转化为可发表的文稿。';
 
   return (
     <div className="min-h-screen font-sans">
@@ -72,18 +72,18 @@ const App: React.FC = () => {
           <aside className="lg:col-span-4 xl:col-span-3 space-y-6">
             <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
               <h2 className="text-lg font-semibold text-slate-800 border-b pb-3 mb-4">
-                1. Upload Files
+                1. 上传文件
               </h2>
               <div className="space-y-4">
                 <FileUpload
                   id="sample-paper"
-                  label={'Sample Paper'}
+                  label={'范文 (Sample)'}
                   onFileSelect={handleSampleFileSelect}
                   file={samplePaper}
                 />
                 <FileUpload
                   id="draft-paper"
-                  label="Draft Paper"
+                  label="草稿 (Draft)"
                   onFileSelect={handleDraftFileSelect}
                   file={draftPaper}
                 />
@@ -91,7 +91,7 @@ const App: React.FC = () => {
             </div>
             <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
                <h2 className="text-lg font-semibold text-slate-800 border-b pb-3 mb-4">
-                2. Start
+                2. 开始
               </h2>
               <button
                 onClick={handleMigrateClick}
@@ -101,10 +101,10 @@ const App: React.FC = () => {
                 {status === 'loading' ? (
                   <>
                     <SpinnerIcon />
-                    {progress?.stage || 'Initializing...'}
+                    {progress?.stage || '初始化中...'}
                   </>
                 ) : (
-                  'Migrate Style'
+                  '开始迁移'
                 )}
               </button>
                {error && <p className="text-red-600 text-sm mt-4">{error}</p>}
@@ -117,7 +117,7 @@ const App: React.FC = () => {
         </div>
       </main>
       <footer className="text-center py-6 text-sm text-slate-500">
-        <p>Powered by Gemini 3.0 Pro Preview • Privacy First • Client-Side Processing</p>
+        <p>由 Gemini 3.0 Pro Preview 驱动 • 隐私优先 • 客户端处理</p>
       </footer>
     </div>
   );

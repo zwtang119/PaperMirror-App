@@ -10,16 +10,16 @@ export interface StyleGuide extends StyleMetrics {
   structure: string;
 }
 
-// New detailed metrics for three-way comparison
+// 用于三方比较的详细指标
 export interface DetailedMetrics {
   sentenceLength: {
     mean: number;
     p50: number;
     p90: number;
-    longRate50: number; // percentage of sentences > 50 chars
+    longRate50: number; // 长度 > 50 字符的句子百分比
   };
   punctuationDensity: {
-    comma: number;     // per 1000 chars
+    comma: number;     // 每 1000 字符
     semicolon: number;
     parenthesis: number;
   };
@@ -31,7 +31,7 @@ export interface DetailedMetrics {
     total: number;
   };
   templateCounts: {
-    count: number;       // total template phrases found
+    count: number;       // 发现的模板短语总数
     perThousandChars: number;
   };
   textLengthChars: number;
@@ -73,26 +73,26 @@ export interface AnalysisReport {
   status: 'complete' | 'partial' | 'error';
   message?: string;
   
-  // New: Mirror Score (main narrative: standard is closer to sample)
+  // 新增: 镜像分数 (主要叙述: 标准版更接近范文)
   mirrorScore?: MirrorScore;
   
-  // New: Three-way style comparison (sample vs draft vs rewritten standard)
+  // 新增: 三方风格比较 (范文 vs 草稿 vs 重写标准版)
   styleComparison?: {
     sample: DetailedMetrics;
     draft: DetailedMetrics;
     rewrittenStandard: DetailedMetrics;
   };
   
-  // New: Fidelity guardrails (draft vs standard)
+  // 新增: 保真度护栏 (草稿 vs 标准版)
   fidelityGuardrails?: FidelityGuardrails;
   
-  // New: Citation suggestions (only for draft)
+  // 新增: 引用建议 (仅针对草稿)
   citationSuggestions?: {
     rulesVersion: string;
     items: CitationSuggestion[];
   };
   
-  // Legacy fields for backward compatibility
+  // 遗留字段，用于向后兼容
   changeRatePerParagraph?: number[];
   consistencyScore?: number;
 }
@@ -103,7 +103,7 @@ export interface ProgressUpdate {
   stage: string;
   current?: number;
   total?: number;
-  payload?: Partial<MigrationResult>; // For streaming results
+  payload?: Partial<MigrationResult>; // 用于流式传输结果
 }
 
 export interface SectionSummary {
@@ -121,63 +121,4 @@ export interface MigrationResult {
   standard?: string;
   enhanced?: string;
   analysisReport?: AnalysisReport;
-}
-
-// ============ Sentence Edits Mode Types ============
-
-/**
- * Token types for tokenized document structure.
- * - 'sentence': A rewritable sentence with an index
- * - 'sep': A paragraph separator (never sent to model, never replaced)
- */
-export type TokenKind = 'sentence' | 'sep';
-
-/**
- * A sentence token that can be rewritten.
- */
-export interface SentenceToken {
-  kind: 'sentence';
-  index: number;
-  text: string;
-}
-
-/**
- * A separator token that preserves paragraph structure.
- * These are never sent to the model and are always preserved as-is.
- */
-export interface SeparatorToken {
-  kind: 'sep';
-  text: string; // Usually '\n\n' or '\n'
-}
-
-/**
- * Union type for all token types.
- */
-export type Token = SentenceToken | SeparatorToken;
-
-/**
- * A replacement instruction from the model.
- * The index corresponds to the sentence index in the tokenized document.
- */
-export interface Replacement {
-  index: number;
-  text: string;
-}
-
-/**
- * Response format from the sentence rewrite API.
- */
-export interface ReplacementsResponse {
-  replacements: Replacement[];
-}
-
-/**
- * Result of processing a batch of sentences.
- */
-export interface BatchResult {
-  success: boolean;
-  replacements: Replacement[];
-  failedIndices: number[];
-  durationMs: number;
-  error?: string;
 }

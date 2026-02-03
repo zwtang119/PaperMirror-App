@@ -25,7 +25,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ id, label, onFileSelect, file }
         fileInputRef.current.value = ''; // Clear input
       }
       if (selectedFile) { // Only show alert if a file was actually selected
-        alert('Please select a valid Markdown (.md) or Text (.txt) file.');
+        alert('请选择有效的 Markdown (.md) 或文本 (.txt) 文件。');
       }
     }
   };
@@ -64,14 +64,14 @@ const FileUpload: React.FC<FileUploadProps> = ({ id, label, onFileSelect, file }
                 <button
                   onClick={handleRemoveFile}
                   className="ml-2 text-slate-500 hover:text-red-600 font-bold leading-none text-lg flex-shrink-0 cursor-pointer"
-                  title="Remove file"
-                  aria-label="Remove file"
+                  title="移除文件"
+                  aria-label="移除文件"
                 >
                   &times;
                 </button>
               </div>
             ) : (
-              <p className="pl-1">Click to upload a file</p>
+              <p className="pl-1">点击上传文件</p>
             )}
             <input
               id={id}
@@ -83,7 +83,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ id, label, onFileSelect, file }
               accept=".md,.txt,text/markdown,text/plain"
             />
           </div>
-          <p className="text-xs text-slate-500">MD or TXT up to 10MB</p>
+          <p className="text-xs text-slate-500">MD 或 TXT 文件，最大 10MB</p>
         </div>
       </div>
     </div>

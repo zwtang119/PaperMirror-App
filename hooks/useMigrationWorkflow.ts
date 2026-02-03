@@ -28,17 +28,17 @@ export const useMigrationWorkflow = () => {
         if (event.target && typeof event.target.result === 'string') {
           resolve(event.target.result);
         } else {
-          reject(new Error('Failed to read file content.'));
+          reject(new Error('读取文件内容失败。'));
         }
       };
-      reader.onerror = () => reject(new Error('Error reading file.'));
+      reader.onerror = () => reject(new Error('读取文件出错。'));
       reader.readAsText(file);
     });
   };
 
   const startMigration = useCallback(async ({ samplePaper, draftPaper }: StartMigrationParams) => {
     if (!samplePaper || !draftPaper) {
-      setError('Please upload both required files.');
+      setError('请上传两个必需的文件。');
       return;
     }
 
@@ -83,8 +83,8 @@ export const useMigrationWorkflow = () => {
       setStatus('success');
     } catch (err) {
       console.error(err);
-      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred during migration.';
-      setError(`Migration failed: ${errorMessage}`);
+      const errorMessage = err instanceof Error ? err.message : '迁移过程中发生未知错误。';
+      setError(`迁移失败: ${errorMessage}`);
       setStatus('error');
     } finally {
       setProgress(null);
