@@ -24,8 +24,8 @@
   },
   "dependencies": {
     "@google/genai": "^1.30.0",
-    "@papermirror/types": "file:../types",
-    "@papermirror/prompts": "file:../prompts",
+    "@papermirror/types": "file:./shared/types",
+    "@papermirror/prompts": "file:./shared/prompts",
     "dompurify": "^3.0.9",
     "marked": "^12.0.0",
     "react": "^18.3.1",

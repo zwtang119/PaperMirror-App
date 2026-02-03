@@ -25,11 +25,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          # cache: 'npm'  <-- REMOVED to fix build error when package-lock.json is missing
 
       - name: Build shared packages
         run: |
-          cd ../types && npm ci && npm run build
+          cd shared/types && npm ci && npm run build
           cd ../prompts && npm ci && npm run build
 
       - name: Install dependencies
