@@ -139,9 +139,9 @@ const App: React.FC = () => {
               result={result}
               downloadLinks={downloadLinks}
               progress={progress}
+              error={error}
             />
           </section>
-        </div>
         </div>
       </main>
 

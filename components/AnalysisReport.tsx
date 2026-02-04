@@ -1,6 +1,6 @@
 
 import React from 'react';
-import type { AnalysisReport as AnalysisReportType, DetailedMetrics, CitationSuggestion, FidelityAlert } from '../types';
+import type { AnalysisReport as AnalysisReportType, DetailedMetrics, CitationSuggestion, FidelityAlert } from '@papermirror/types';
 
 interface AnalysisReportProps {
   report: AnalysisReportType;

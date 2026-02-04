@@ -6,9 +6,10 @@ interface FileUploadProps {
   label: string;
   onFileSelect: (file: File | null) => void;
   file: File | null;
+  disabled?: boolean;
 }
 
-const FileUpload: React.FC<FileUploadProps> = ({ id, label, onFileSelect, file }) => {
+const FileUpload: React.FC<FileUploadProps> = ({ id, label, onFileSelect, file, disabled = false }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -39,8 +40,8 @@ const FileUpload: React.FC<FileUploadProps> = ({ id, label, onFileSelect, file }
   };
 
   const handleContainerClick = () => {
-    // Don't open file dialog if the user is trying to remove a file
-    if (!file) {
+    // Don't open file dialog if disabled or if the user is trying to remove a file
+    if (!disabled && !file) {
       fileInputRef.current?.click();
     }
   };
@@ -51,8 +52,12 @@ const FileUpload: React.FC<FileUploadProps> = ({ id, label, onFileSelect, file }
       <label htmlFor={id} className="block text-sm font-medium text-slate-700 mb-1">
         {label}
       </label>
-      <div 
-        className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-slate-300 border-dashed rounded-md cursor-pointer hover:border-blue-500 transition-colors"
+      <div
+        className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-slate-300 border-dashed rounded-md transition-colors ${
+          disabled
+            ? 'cursor-not-allowed opacity-50'
+            : 'cursor-pointer hover:border-blue-500'
+        }`}
         onClick={handleContainerClick}
         >
         <div className="space-y-1 text-center">
@@ -63,7 +68,12 @@ const FileUpload: React.FC<FileUploadProps> = ({ id, label, onFileSelect, file }
                 <span className="truncate max-w-[150px] sm:max-w-[200px]" title={file.name}>{file.name}</span>
                 <button
                   onClick={handleRemoveFile}
-                  className="ml-2 text-slate-500 hover:text-red-600 font-bold leading-none text-lg flex-shrink-0 cursor-pointer"
+                  disabled={disabled}
+                  className={`ml-2 font-bold leading-none text-lg flex-shrink-0 ${
+                    disabled
+                      ? 'text-slate-400 cursor-not-allowed'
+                      : 'text-slate-500 hover:text-red-600 cursor-pointer'
+                  }`}
                   title="移除文件"
                   aria-label="移除文件"
                 >
@@ -81,6 +91,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ id, label, onFileSelect, file }
               ref={fileInputRef}
               onChange={handleFileChange}
               accept=".md,.txt,text/markdown,text/plain"
+              disabled={disabled}
             />
           </div>
           <p className="text-xs text-slate-500">MD 或 TXT 文件，最大 10MB</p>

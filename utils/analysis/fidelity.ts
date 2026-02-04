@@ -3,7 +3,7 @@
  * 比较草稿与重写后的标准版，以检测信息丢失。
  */
 
-import type { FidelityGuardrails, FidelityAlert } from '../../types';
+import type { FidelityGuardrails, FidelityAlert } from '@papermirror/types';
 import { splitSentencesCN } from './text';
 
 /**

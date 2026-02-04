@@ -4,7 +4,7 @@ import type { MigrationResult, ProgressUpdate } from '@papermirror/types';
 import {
   calculateFidelityGuardrails,
   calculateMetrics,
-  calculateMirrorScore
+  generateMirrorScore
 } from '../utils/analysis';
 
 interface WorkflowParams {
@@ -61,7 +61,7 @@ async function runFullTextWorkflow({
 
         onProgress({ stage: '正在计算镜像分数...' });
 
-        const mirrorScore = calculateMirrorScore(
+        const mirrorScore = generateMirrorScore(
           sampleMetrics,
           draftMetrics,
           rewrittenMetrics
