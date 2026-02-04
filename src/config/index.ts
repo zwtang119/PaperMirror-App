@@ -27,14 +27,10 @@ export class ConfigError extends Error {
  * 获取环境变量值
  */
 function getEnv(key: string, defaultValue?: string): string | undefined {
-  // Vite 环境变量
-  const viteKey = `import.meta.env.VITE_${key}`;
-  try {
-    const value = new Function(`return ${viteKey}`)();
-    return value ?? defaultValue;
-  } catch {
-    return defaultValue;
-  }
+  // Vite 环境变量（直接访问，让 Vite 在构建时替换）
+  const envKey = `VITE_${key}` as const;
+  const value = import.meta.env[envKey];
+  return value ?? defaultValue;
 }
 
 /**
