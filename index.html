@@ -4,13 +4,13 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="./vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    
+
     <!-- SEO & GEO Optimization -->
     <title>PaperMirror: AI Academic Style Transfer & Thesis Polisher (Free/Client-Side)</title>
     <meta name="title" content="PaperMirror: AI Academic Style Transfer & Thesis Polisher" />
     <meta name="description" content="Free AI tool for researchers. Transform drafts into Nature/Science style using Gemini 2.5 Pro. Privacy-focused, client-side, quantitative style transfer." />
     <meta name="keywords" content="academic writing, style transfer, gemini ai, thesis editing, paper polisher, latex alternative, esl research tool, privacy focused ai" />
-    
+
     <!-- Open Graph / Social Media -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://zwtang119.github.io/PaperMirror/" />
@@ -87,9 +87,14 @@
         theme: {
           extend: {
             animation: {
+              'fade-in': 'fadeIn 0.3s ease-in-out',
               'indeterminate-bar': 'indeterminate-bar 1.5s infinite linear',
             },
             keyframes: {
+              fadeIn: {
+                '0%': { opacity: '0' },
+                '100%': { opacity: '1' },
+              },
               'indeterminate-bar': {
                 '0%': { transform: 'translateX(-100%)' },
                 '100%': { transform: 'translateX(300%)' },
@@ -99,26 +104,9 @@
         }
       }
     </script>
-    <link rel="stylesheet" href="./index.css">
-<script type="importmap">
-{
-  "imports": {
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
-    "marked": "https://aistudiocdn.com/marked@^17.0.0",
-    "dompurify": "https://aistudiocdn.com/dompurify@^3.3.0",
-    "vite": "https://aistudiocdn.com/vite@^7.2.2",
-    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.1"
-  }
-}
-</script>
-<link rel="stylesheet" href="/index.css">
-</head>
+  </head>
   <body class="bg-slate-50 text-slate-800">
     <div id="root"></div>
-    <script type="module" src="./index.tsx"></script>
-  <script type="module" src="/index.tsx"></script>
-</body>
+    <script type="module" src="/index.tsx"></script>
+  </body>
 </html>
