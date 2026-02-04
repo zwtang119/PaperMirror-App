@@ -147,7 +147,23 @@ export async function processPaperWithCloudFunction(
             // 检查进度超时（超过 60 秒无响应视为超时）
             const now = Date.now();
             if (now - lastProgressTime > 60000) {
-                const error = new ApiError('服务器响应超时', 'TIMEOUT');
+                const totalChars = samplePaper.length + draftPaper.length;
+                const isLargeDoc = totalChars > 30000;
+
+                let message = '服务器响应超时';
+                if (isLargeDoc) {
+                    message = `文档较大（${Math.round(totalChars / 1000)}k字符），处理时间较长。服务器响应超时，请稍后重试。`;
+                }
+
+                const error = new ApiError(message, 'TIMEOUT');
+                error.context = {
+                    timestamp: new Date().toISOString(),
+                    metadata: {
+                        documentSize: totalChars,
+                        isLargeDocument: isLargeDoc,
+                        suggestion: '建议：1) 点击重试按钮 2) 或将文档分段处理 3) 大文档可能需要1-2分钟'
+                    }
+                };
                 console.error(`[${requestId}] 进度超时，上次更新: ${new Date(lastProgressTime).toISOString()}`);
                 await reportError(error, { requestId, stage: 'streaming_timeout' });
                 throw error;

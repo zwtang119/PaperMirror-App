@@ -8,6 +8,7 @@ import { saveFileToStorage, loadFileFromStorage, removeFileFromStorage } from '.
 const App: React.FC = () => {
   const [samplePaper, setSamplePaper] = useState<File | null>(null);
   const [draftPaper, setDraftPaper] = useState<File | null>(null);
+  const [showLargeDocWarning, setShowLargeDocWarning] = useState(false);
 
   const {
     isIdle,
@@ -54,8 +55,23 @@ const App: React.FC = () => {
   };
 
   const handleMigrateClick = useCallback(() => {
-    startMigration({ samplePaper, draftPaper });
+    // 检查文档总大小
+    const totalSize = (samplePaper?.size || 0) + (draftPaper?.size || 0);
+    const totalSizeKB = Math.round(totalSize / 1024);
+
+    // 如果文档超过 30KB（约3万字符），显示警告
+    if (totalSizeKB > 30) {
+      setShowLargeDocWarning(true);
+    } else {
+      setShowLargeDocWarning(false);
+      startMigration({ samplePaper, draftPaper });
+    }
   }, [samplePaper, draftPaper, startMigration]);
+
+  const handleConfirmMigration = () => {
+    setShowLargeDocWarning(false);
+    startMigration({ samplePaper, draftPaper });
+  };
 
   const mainTitle = 'PaperMirror: AI 学术风格迁移';
   const mainDescription = '模仿顶刊风格，将您的草稿转化为可发表的文稿。';
@@ -144,6 +160,45 @@ const App: React.FC = () => {
           </section>
         </div>
       </main>
+
+      {/* 大文档警告对话框 */}
+      {showLargeDocWarning && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <h3 className="text-xl font-semibold text-slate-800 mb-4">
+              ⚠️ 检测到大文档
+            </h3>
+            <div className="space-y-3 mb-6">
+              <p className="text-slate-700">
+                您上传的文档较大（总共约 <strong>{Math.round((samplePaper!.size + draftPaper!.size) / 1024)} KB</strong>），
+                处理时间可能较长（预计 1-2 分钟）。
+              </p>
+              <div className="bg-amber-50 border border-amber-200 rounded-md p-4">
+                <p className="text-sm text-amber-900 font-medium mb-2">建议：</p>
+                <ul className="text-sm text-amber-800 space-y-1">
+                  <li>• 大文档处理时请耐心等待，不要关闭页面</li>
+                  <li>• 如果超时，可以点击重试按钮（第二次通常会成功）</li>
+                  <li>• 或将文档分段处理，每次处理一部分</li>
+                </ul>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={handleConfirmMigration}
+                className="flex-1 bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                确认开始
+              </button>
+              <button
+                onClick={() => setShowLargeDocWarning(false)}
+                className="flex-1 bg-slate-200 text-slate-700 font-semibold py-2 px-4 rounded-lg hover:bg-slate-300 transition-colors"
+              >
+                取消
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <footer className="text-center py-6 text-sm text-slate-500">
         <p>由 Gemini 驱动 • 隐私优先 • 开源项目</p>
