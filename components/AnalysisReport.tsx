@@ -1,7 +1,6 @@
 
 import React from 'react';
-import type { AnalysisReport as AnalysisReportType, DetailedMetrics, CitationSuggestion, FidelityAlert } from '@papermirror/types';
-import StyleRadarChart from './StyleRadarChart';
+import type { AnalysisReport as AnalysisReportType, DetailedMetrics, CitationSuggestion, FidelityAlert } from '../types';
 
 interface AnalysisReportProps {
   report: AnalysisReportType;
@@ -175,19 +174,6 @@ const AnalysisReport: React.FC<AnalysisReportProps> = ({ report }) => {
       {styleComparison && (
         <div>
           <h3 className="text-lg font-semibold text-slate-800 mb-3">📊 风格比较</h3>
-          
-          <div className="bg-white p-4 rounded-lg border border-slate-200 mb-6">
-            <h4 className="text-sm font-medium text-slate-500 mb-4 text-center">风格特征雷达图</h4>
-            <StyleRadarChart 
-              sample={styleComparison.sample}
-              draft={styleComparison.draft}
-              rewritten={styleComparison.rewrittenStandard}
-            />
-            <p className="text-xs text-center text-slate-400 mt-2">
-              * 数值已归一化到 0-100 区间，重写版（蓝色）应尽可能贴近范文（灰色）。
-            </p>
-          </div>
-
           <div className="space-y-3">
             <DetailedMetricsDisplay title="📄 样文（目标）" metrics={styleComparison.sample} />
             <DetailedMetricsDisplay title="📝 原始草稿" metrics={styleComparison.draft} />

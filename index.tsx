@@ -11,7 +11,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
-import { ErrorBoundary } from './components/ErrorBoundary';
+import ErrorBoundary from './components/ErrorBoundary';
 import { initGlobalErrorHandlers, configureErrorReporting } from './src/errors';
 
 // ==================== 初始化全局错误处理 ====================

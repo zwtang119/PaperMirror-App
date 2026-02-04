@@ -2,7 +2,7 @@
  * 风格指标计算 - 用于三方比较（范文 vs 草稿 vs 标准版）。
  */
 
-import type { DetailedMetrics } from '@papermirror/types';
+import type { DetailedMetrics } from '../../types';
 import { splitSentencesCN, getBodyText, normalizeText } from './text';
 
 // 连接词列表（中文学术写作）

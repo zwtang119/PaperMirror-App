@@ -7,8 +7,51 @@
  * 包括网络错误、API 错误、验证错误等。每种错误都有对应的错误码和用户友好的消息。
  */
 
-import { ErrorCodes, type ErrorCode, type ErrorDetails } from '@papermirror/types';
-export { ErrorCodes, type ErrorCode, type ErrorDetails };
+// ==================== 错误码定义 ====================
+
+/**
+ * 错误码枚举
+ * 用于唯一标识不同类型的错误，便于错误追踪和处理
+ */
+export const ErrorCodes = {
+  // 网络错误 (1000-1099)
+  CONNECTION_FAILED: 'CONNECTION_FAILED',
+  URL_NOT_CONFIGURED: 'URL_NOT_CONFIGURED',
+  TIMEOUT: 'TIMEOUT',
+  NETWORK_ABORTED: 'NETWORK_ABORTED',
+
+  // API 错误 (1100-1199)
+  SERVER_ERROR: 'SERVER_ERROR',
+  EMPTY_RESPONSE: 'EMPTY_RESPONSE',
+  INCOMPLETE_RESPONSE: 'INCOMPLETE_RESPONSE',
+  UNAUTHORIZED: 'UNAUTHORIZED',
+  FORBIDDEN: 'FORBIDDEN',
+  NOT_FOUND: 'NOT_FOUND',
+  RATE_LIMITED: 'RATE_LIMITED',
+  SERVICE_UNAVAILABLE: 'SERVICE_UNAVAILABLE',
+
+  // 验证错误 (1200-1299)
+  VALIDATION_FAILED: 'VALIDATION_FAILED',
+  INVALID_INPUT: 'INVALID_INPUT',
+  MISSING_REQUIRED_FIELD: 'MISSING_REQUIRED_FIELD',
+
+  // 文件错误 (1300-1399)
+  FILE_READ_ERROR: 'FILE_READ_ERROR',
+  FILE_TOO_LARGE: 'FILE_TOO_LARGE',
+  INVALID_FILE_TYPE: 'INVALID_FILE_TYPE',
+  FILE_EMPTY: 'FILE_EMPTY',
+
+  // 工作流错误 (1400-1499)
+  WORKFLOW_FAILED: 'WORKFLOW_FAILED',
+  PROCESSING_ERROR: 'PROCESSING_ERROR',
+  WORKFLOW_CANCELLED: 'WORKFLOW_CANCELLED',
+
+  // 配置错误 (1500-1599)
+  CONFIG_MISSING: 'CONFIG_MISSING',
+  CONFIG_INVALID: 'CONFIG_INVALID',
+} as const;
+
+export type ErrorCode = typeof ErrorCodes[keyof typeof ErrorCodes];
 
 // ==================== 错误上下文接口 ====================
 
@@ -390,13 +433,6 @@ const userFriendlyMessages: Record<ErrorCode, string> = {
  * ```
  */
 export function getUserFriendlyError(error: unknown): string {
-  // 处理 ErrorDetails (来自序列化的 AppError)
-  if (error && typeof error === 'object' && 'code' in error && 'message' in error) {
-    const errorDetails = error as ErrorDetails;
-    const errorCode = errorDetails.code as ErrorCode;
-    return userFriendlyMessages[errorCode] || errorDetails.message || '发生未知错误，请稍后重试';
-  }
-
   if (error instanceof AppError) {
     return userFriendlyMessages[error.code] || error.message || '发生未知错误，请稍后重试';
   }
@@ -410,7 +446,7 @@ export function getUserFriendlyError(error: unknown): string {
 
 /**
  * 判断错误是否可以重试
- *
+ * 
  * @param error - 错误对象
  * @returns 是否可以重试
  */
@@ -419,36 +455,6 @@ export function isRetryableError(error: unknown): boolean {
     return error.retryable;
   }
   return false;
-}
-
-/**
- * 获取配置诊断信息
- * 用于帮助用户检查配置问题
- */
-export function getConfigDiagnostics(): Record<string, { configured: boolean; value?: string; hint: string }> {
-  const diagnostics: Record<string, { configured: boolean; value?: string; hint: string }> = {};
-
-  // 检查 Cloud Function URL
-  const cfUrl = import.meta.env.VITE_CLOUD_FUNCTION_URL;
-  diagnostics.cloudFunctionUrl = {
-    configured: !!cfUrl && cfUrl !== 'http://localhost:8080',
-    value: cfUrl || '未配置',
-    hint: !cfUrl || cfUrl === 'http://localhost:8080'
-      ? '需要在 .env 文件中配置 VITE_CLOUD_FUNCTION_URL'
-      : '已配置'
-  };
-
-  // 检查 APP_TOKEN
-  const token = import.meta.env.VITE_APP_TOKEN;
-  diagnostics.appToken = {
-    configured: !!token && token !== 'your_secret_token_here' && token !== 'my-secret-password-123',
-    value: token ? '***已配置***' : '未配置',
-    hint: !token || token === 'your_secret_token_here' || token === 'my-secret-password-123'
-      ? '需要在 .env 文件中配置 VITE_APP_TOKEN'
-      : '已配置'
-  };
-
-  return diagnostics;
 }
 
 /**

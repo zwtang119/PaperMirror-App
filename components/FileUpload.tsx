@@ -6,14 +6,12 @@ interface FileUploadProps {
   label: string;
   onFileSelect: (file: File | null) => void;
   file: File | null;
-  disabled?: boolean;
 }
 
-const FileUpload: React.FC<FileUploadProps> = ({ id, label, onFileSelect, file, disabled = false }) => {
+const FileUpload: React.FC<FileUploadProps> = ({ id, label, onFileSelect, file }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (disabled) return;
     const selectedFile = event.target.files ? event.target.files[0] : null;
     const allowedTypes = ['text/markdown', 'text/plain'];
     const fileName = selectedFile?.name?.toLowerCase() ?? '';
@@ -33,7 +31,6 @@ const FileUpload: React.FC<FileUploadProps> = ({ id, label, onFileSelect, file, 
   };
   
   const handleRemoveFile = (e: React.MouseEvent) => {
-    if (disabled) return;
     e.stopPropagation();
     onFileSelect(null);
     if (fileInputRef.current) {
@@ -84,7 +81,6 @@ const FileUpload: React.FC<FileUploadProps> = ({ id, label, onFileSelect, file, 
               ref={fileInputRef}
               onChange={handleFileChange}
               accept=".md,.txt,text/markdown,text/plain"
-              disabled={disabled}
             />
           </div>
           <p className="text-xs text-slate-500">MD 或 TXT 文件，最大 10MB</p>

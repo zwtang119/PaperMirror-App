@@ -63,7 +63,7 @@ export const useMigrationWorkflow = () => {
   // 清理函数
   const revokeDownloadLinks = useCallback((links: DownloadLinks) => {
     Object.values(links).forEach((url) => {
-      if (typeof url === 'string' && url.startsWith('blob:')) {
+      if (url && url.startsWith('blob:')) {
         URL.revokeObjectURL(url);
       }
     });
@@ -80,12 +80,21 @@ export const useMigrationWorkflow = () => {
   const readFileContent = useCallback((file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       // 验证文件类型
-      const validTypes = ['text/plain', 'text/markdown', 'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'application/pdf', 'text/x-tex'];
+      // 注意: PDF 不支持，因为 FileReader.readAsText() 无法正确读取二进制 PDF
+      const validTypes = [
+        'text/plain',                    // .txt
+        'text/markdown',                 // .md
+        'text/x-tex',                    // .tex
+        'application/msword',            // .doc
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document' // .docx
+      ];
 
       if (!validTypes.includes(file.type) && !file.name.match(/\.(txt|md|docx?|tex)$/i)) {
-        reject(new FileError(`不支持的文件类型: ${file.type || '未知'}`, 'INVALID_FILE_TYPE'));
+        reject(new FileError(
+          `不支持的文件类型: ${file.type || '未知'}。` +
+          `支持的类型: TXT, MD, TEX, DOC, DOCX（暂不支持 PDF）`,
+          'INVALID_FILE_TYPE'
+        ));
         return;
       }
 

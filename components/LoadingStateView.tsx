@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import type { ProgressUpdate } from '@papermirror/types';
+import type { ProgressUpdate } from '../types';
 
 interface LoadingStateViewProps {
   progress: ProgressUpdate | null;

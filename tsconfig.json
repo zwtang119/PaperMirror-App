@@ -1,4 +1,5 @@
 {
+  "extends": "../types/tsconfig.json",
   "compilerOptions": {
     "target": "ES2022",
     "experimentalDecorators": true,
@@ -19,28 +20,18 @@
     "moduleDetection": "force",
     "allowJs": true,
     "jsx": "react-jsx",
-    "baseUrl": ".",
     "paths": {
-      "@papermirror/types": [
-        "./shared/types/src"
+      "@/*": [
+        "./*"
       ],
-      "@papermirror/prompts": [
-        "./shared/prompts/src"
+      "@papermirror/types": [
+        "../types/src/index.ts"
       ]
     },
     "allowImportingTsExtensions": true,
     "noEmit": true
   },
-  "include": [
-    "src/**/*",
-    "shared/**/*",
-    "src/types/**/*",
-    "src/prompts/**/*",
-    "components/**/*",
-    "hooks/**/*",
-    "services/**/*",
-    "utils/**/*",
-    "*.ts",
-    "*.tsx"
+  "references": [
+    { "path": "../types" }
   ]
 }

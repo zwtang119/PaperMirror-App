@@ -4,8 +4,7 @@ import type { MigrationResult, ProgressUpdate } from '@papermirror/types';
 import {
   calculateFidelityGuardrails,
   calculateMetrics,
-  generateMirrorScore,
-  generateCitationSuggestions
+  calculateMirrorScore
 } from '../utils/analysis';
 
 interface WorkflowParams {
@@ -62,16 +61,12 @@ async function runFullTextWorkflow({
 
         onProgress({ stage: '正在计算镜像分数...' });
 
-        const mirrorScore = generateMirrorScore(
+        const mirrorScore = calculateMirrorScore(
           sampleMetrics,
           draftMetrics,
           rewrittenMetrics
         );
         result.analysisReport.mirrorScore = mirrorScore;
-
-        onProgress({ stage: '正在生成引用建议...' });
-        const citations = generateCitationSuggestions(draftPaperContent);
-        result.analysisReport.citationSuggestions = citations;
       }
     }
 

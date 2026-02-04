@@ -137,11 +137,11 @@ const App: React.FC = () => {
               isSuccess={isSuccess}
               isError={isError}
               result={result}
-                downloadLinks={downloadLinks}
-                progress={progress}
-                error={error}
-              />
-            </section>
+              downloadLinks={downloadLinks}
+              progress={progress}
+            />
+          </section>
+        </div>
         </div>
       </main>
 

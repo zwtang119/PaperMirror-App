@@ -4,38 +4,37 @@
  */
 
 import type { AppConfig, AnalysisMode } from '@papermirror/types';
-import { ErrorCodes, type ErrorCode } from '@papermirror/types';
-import { AppError } from '../errors';
+
+// 错误码定义
+export const ErrorCodes = {
+  CONFIG_MISSING: 'CONFIG_MISSING',
+  CONFIG_INVALID: 'CONFIG_INVALID',
+} as const;
 
 // 配置验证错误
-export class ConfigError extends AppError {
+export class ConfigError extends Error {
   constructor(
     message: string,
-    code: ErrorCode,
+    public code: string,
     public key?: string
   ) {
-    super(message, code);
+    super(message);
     this.name = 'ConfigError';
   }
 }
 
 /**
  * 获取环境变量值
- * 注意：在 Vite 中必须显式访问 import.meta.env.* 才能被静态替换
  */
 function getEnv(key: string, defaultValue?: string): string | undefined {
-  // 显式映射所有支持的环境变量
-  const envMap: Record<string, string | undefined> = {
-    'CLOUD_FUNCTION_URL': import.meta.env.VITE_CLOUD_FUNCTION_URL,
-    'API_TIMEOUT': import.meta.env.VITE_API_TIMEOUT,
-    'APP_TOKEN': import.meta.env.VITE_APP_TOKEN,
-    'GEMINI_MODEL': import.meta.env.VITE_GEMINI_MODEL,
-    'GEMINI_TEMPERATURE': import.meta.env.VITE_GEMINI_TEMPERATURE,
-    'GEMINI_THINKING_BUDGET': import.meta.env.VITE_GEMINI_THINKING_BUDGET,
-    'ANALYSIS_MODE': import.meta.env.VITE_ANALYSIS_MODE,
-  };
-
-  return envMap[key] ?? defaultValue;
+  // Vite 环境变量
+  const viteKey = `import.meta.env.VITE_${key}`;
+  try {
+    const value = new Function(`return ${viteKey}`)();
+    return value ?? defaultValue;
+  } catch {
+    return defaultValue;
+  }
 }
 
 /**

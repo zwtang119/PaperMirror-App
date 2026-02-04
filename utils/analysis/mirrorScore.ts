@@ -3,7 +3,7 @@
  * 主要叙述：标准版应该比草稿更接近范文。
  */
 
-import type { DetailedMetrics, MirrorScore } from '@papermirror/types';
+import type { DetailedMetrics, MirrorScore } from '../../types';
 
 // 分数计算的默认权重
 const DEFAULT_WEIGHTS = {

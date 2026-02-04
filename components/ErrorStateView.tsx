@@ -1,111 +1,13 @@
 import React from 'react';
-import { AppError, getUserFriendlyError, isRetryableError, ErrorDetails, getConfigDiagnostics } from '../src/errors';
 
-interface Props {
-  error: Error | AppError | ErrorDetails | null;
-  onRetry?: () => void;
-  title?: string;
-  showDetails?: boolean;
-}
-
-const ErrorStateView: React.FC<Props> = ({
-  error,
-  onRetry,
-  title = "应用出现错误",
-  showDetails: initialShowDetails = false
-}) => {
-  const [showDetails, setShowDetails] = React.useState(initialShowDetails);
-
-  const userMessage = getUserFriendlyError(error);
-  const retryable = onRetry && isRetryableError(error);
-  const isDev = process.env.NODE_ENV === 'development';
-  const timestamp = new Date().toLocaleString('zh-CN');
-
-  // 提取错误代码和类型
-  const errorCode = (error as any)?.code;
-  const errorType = (error as any)?.name || 'Error';
-
-  // 生成诊断信息
-  const getDiagnosticInfo = () => {
-    if (!error) return [];
-
-    const diagnostics: string[] = [];
-
-    // 检查是否是配置错误
-    if (errorCode === 'CONFIG_MISSING' || userMessage.includes('配置')) {
-      const configDiag = getConfigDiagnostics();
-
-      if (!configDiag.cloudFunctionUrl.configured) {
-        diagnostics.push(`• Cloud Function URL ${configDiag.cloudFunctionUrl.hint}`);
-        diagnostics.push(`  当前值: ${configDiag.cloudFunctionUrl.value}`);
-      }
-
-      if (!configDiag.appToken.configured) {
-        diagnostics.push(`• APP_TOKEN ${configDiag.appToken.hint}`);
-      }
-
-      if (diagnostics.length === 0) {
-        diagnostics.push('• 检查环境变量是否正确配置');
-        diagnostics.push('• 确认 .env 文件存在且包含必要配置');
-      }
-    }
-
-    // 检查是否是网络错误
-    if (userMessage.includes('网络') || userMessage.includes('连接')) {
-      diagnostics.push('• 检查网络连接是否正常');
-      diagnostics.push('• 确认后端服务是否运行');
-      const configDiag = getConfigDiagnostics();
-      diagnostics.push(`• Cloud Function URL: ${configDiag.cloudFunctionUrl.value}`);
-    }
-
-    // 检查是否是 API 错误
-    if (errorCode === 'API_ERROR' || userMessage.includes('服务器')) {
-      diagnostics.push('• 服务器可能暂时不可用');
-      diagnostics.push('• 请稍后重试或联系管理员');
-    }
-
-    // 检查是否是文件错误
-    if (errorCode?.startsWith('FILE_') || userMessage.includes('文件')) {
-      diagnostics.push('• 确认上传的文件格式正确 (txt, md, docx, pdf, tex)');
-      diagnostics.push('• 检查文件大小是否超过限制 (最大 10MB)');
-    }
-
-    // 默认建议
-    if (diagnostics.length === 0) {
-      diagnostics.push('• 尝试刷新页面');
-      diagnostics.push('• 清除浏览器缓存后重试');
-      diagnostics.push('• 如果问题持续，请查看详细错误信息');
-    }
-
-    return diagnostics;
-  };
-
-  const diagnostics = getDiagnosticInfo();
-
-  return (
-    <div className="min-h-[50vh] flex items-center justify-center bg-slate-50 p-4 rounded-lg">
-      <div className="max-w-lg w-full bg-white rounded-xl shadow-lg p-8">
-        {/* 错误图标 */}
-        <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-          <svg
-            className="w-10 h-10 text-red-600"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-            />
-          </svg>
-        </div>
-
-        {/* 标题 */}
+const ErrorStateView: React.FC = () => (
+  <div className="text-center py-20 px-6 bg-red-50 border border-red-200 rounded-lg">
+    <h3 className="text-xl font-semibold text-red-800">处理失败</h3>
+    <p className="text-red-600 mt-2">发生错误。请查看浏览器控制台以获取详细信息并重试。</p>
+  </div>
+);
         <h2 className="text-2xl font-bold text-slate-900 text-center mb-2">
           {title}
-        </h2>
 
         {/* 时间戳 */}
         <p className="text-sm text-slate-400 text-center mb-4">
