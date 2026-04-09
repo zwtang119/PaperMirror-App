@@ -272,12 +272,22 @@ export async function checkServiceHealth(): Promise<boolean> {
     }
 
     try {
-        const response = await fetch(config.baseUrl, {
-            method: 'OPTIONS',
-            headers: { 'X-My-Token': config.token || '' },
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+        const response = await fetch(`${config.baseUrl}/health`, {
+            method: 'GET',
+            signal: controller.signal,
         });
-        console.log(`[Health Check] 状态: ${response.status}`);
-        return response.ok || response.status === 204;
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+            const data = await response.json();
+            console.log('[Health Check] 状态:', data);
+            return data.status === 'ok';
+        }
+        console.warn('[Health Check] 非 200 响应:', response.status);
+        return false;
     } catch (err) {
         console.error('[Health Check] 失败:', err);
         return false;

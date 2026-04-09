@@ -4,11 +4,13 @@ import ResultDisplay from './components/ResultDisplay';
 import SpinnerIcon from './components/icons/SpinnerIcon';
 import { useMigrationWorkflow } from './hooks/useMigrationWorkflow';
 import { saveFileToStorage, loadFileFromStorage, removeFileFromStorage } from './utils/storage';
+import { checkServiceHealth } from './services/cloudFunctionService';
 
 const App: React.FC = () => {
   const [samplePaper, setSamplePaper] = useState<File | null>(null);
   const [draftPaper, setDraftPaper] = useState<File | null>(null);
   const [showLargeDocWarning, setShowLargeDocWarning] = useState(false);
+  const [backendAvailable, setBackendAvailable] = useState(true);
 
   const {
     isIdle,
@@ -34,6 +36,10 @@ const App: React.FC = () => {
       if (persistedDraft) setDraftPaper(persistedDraft);
     };
     loadPersistedFiles();
+
+    checkServiceHealth().then((available) => {
+      setBackendAvailable(available);
+    });
   }, []);
 
   const handleSampleFileSelect = async (file: File | null) => {
@@ -93,6 +99,16 @@ const App: React.FC = () => {
           <p className="text-slate-500 mt-1 text-sm">{mainDescription}</p>
         </div>
       </header>
+
+      {!backendAvailable && (
+        <div className="bg-amber-50 border-b border-amber-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+            <p className="text-amber-800 text-sm text-center">
+              ⚠️ 后端服务暂时不可用，请稍后再试
+            </p>
+          </div>
+        </div>
+      )}
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
