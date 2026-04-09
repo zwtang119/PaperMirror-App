@@ -1,0 +1,10 @@
+- [ ] index.html 中所有 OG URL 已更新为 `/PaperMirror-App/`
+- [ ] index.html 中所有 Twitter URL 已更新为 `/PaperMirror-App/`
+- [ ] index.html 中 Canonical URL 已更新为 `/PaperMirror-App/`
+- [ ] index.html 中 FAQ 结构化数据已更新为 server-side 架构描述
+- [ ] Favicon 文件存在且路径引用正确
+- [ ] `checkServiceHealth()` 使用 GET `/health` 端点
+- [ ] 页面加载时自动检测后端可用性
+- [ ] 后端不可用时 UI 显示警告提示
+- [ ] GitHub Actions 部署成功
+- [ ] 线上页面可正常访问并完成完整工作流
