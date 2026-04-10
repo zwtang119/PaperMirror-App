@@ -1,0 +1,11 @@
+- [ ] PaperMirror-App/.gitignore 已更新保护敏感文件
+- [ ] PaperMirror-Server/.gitignore 已更新保护敏感文件
+- [ ] PaperMirror-GLM/.gitignore 已更新保护敏感文件
+- [ ] 已检查并清理上传到 GitHub 的敏感文件
+- [ ] PaperMirror-App GitHub Actions 配置正确
+- [ ] PaperMirror-GLM GitHub Actions 配置正确
+- [ ] 后端成功部署到 Cloud Run
+- [ ] /health 端点返回正常
+- [ ] 前端 .env.production 已更新为新的后端 URL
+- [ ] 前端成功部署到 GitHub Pages
+- [ ] 线上页面功能验证通过
